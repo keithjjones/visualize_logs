@@ -25,7 +25,9 @@ Coming soon!
 ## ProcMon Logs
 
 The best use case is if you start your ProcMon capture before you run the file you are analyzing.  If a process 
-is not started the associated network connections may not be connected to the process in the plot.
+is not started the associated network connections may not be connected to the process in the plot.  I also could
+not get ProcMon to capture TCP data when WinPCAP was installed.  You may not want to install WinPCAP if you are
+interested in TCP data.
 
 This this library feels like it is taking a long time, it is likely that you are trying to import a lot of ProcMon
 data.  You can always filter your data and save it as a CSV showing just the events you want to graph.
