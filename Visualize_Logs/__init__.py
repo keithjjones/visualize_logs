@@ -1166,7 +1166,7 @@ class ProcMonCSV(object):
             can be noisy if True.
         :param plotfilereads: Set to False to remove File Reads.
         :param plotfilewrites: Set to False to remove File Writes.
-        :param plotfilewrites: Set to False to remove File Deletes.
+        :param plotfiledeletes: Set to False to remove File Deletes.
         :param ignorepaths: Set this to a list of regular expressions.  If the
             regular expression fires in the Path column, that event will not be
             plotted.  Set to None to ignore this option.  This is case
