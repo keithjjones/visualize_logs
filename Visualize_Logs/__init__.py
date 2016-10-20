@@ -227,10 +227,12 @@ class ProcMonCSV(object):
             self.digraph.add_edge(idx,
                                   hostname)
 
-    def _addedgetofile(self, idx, file):
+    def _addfile(self, file):
         """
 
-        Internal function to link an idx to a file.
+        Internal function to create a file.
+
+        :returns: filename for the node
 
         """
         if file in self.filetable:
@@ -245,6 +247,28 @@ class ProcMonCSV(object):
             self.digraph.add_node(filename,
                                   type='file',
                                   filenum=filenum)
+        return filename
+
+    def _addedgetofiles(self, file1, file2):
+        """
+
+        Internal function to link 2 files.
+
+        """
+        filename1 = self._addfile(file1)
+        filename2 = self._addfile(file2)
+
+        if not self.digraph.has_edge(filename1, filename2):
+            self.digraph.add_edge(filename1, filename2)
+
+    def _addedgetofile(self, idx, file):
+        """
+
+        Internal function to link an idx to a file.
+
+        """
+        filename = self._addfile(file)
+
         if not self.digraph.has_edge(idx, filename):
             self.digraph.add_edge(idx,
                                   filename)
@@ -294,6 +318,7 @@ class ProcMonCSV(object):
         self.filewritetable = dict()
         self.filereadtable = dict()
         self.filedeletetable = dict()
+        self.filerenametable = dict()
         self.filetable = dict()
 
         # Create a structure to hold metadata about our nodes...
@@ -444,6 +469,41 @@ class ProcMonCSV(object):
                                           realnodename)
 
                 self._addedgetofile(realnodename, row['Path'])
+            if (row['Operation'] == 'SetRenameInformationFile' and
+                    self.plotfilerenames is True):
+                if row['PID'] not in currentprocs:
+                    pidnode = self._addunknownpid(row['PID'])
+                else:
+                    pidnode = currentprocs[row['PID']]
+
+                m = re.search(".* FileName: (.*)$", row['Detail'])
+                if m:
+                    destfile = m.group(1)
+                else:
+                    raise VisualizeLogsParseError(row['Details'])
+
+                nodename = ("\"* PID {0} Renames File {1} to {2}\""
+                            .format(pidnode, row['Path'], destfile))
+
+                if nodename not in self.filerenametable:
+                    nextnum = len(self.filerenametable)
+                    realnodename = '\"* File Rename {0}\"'.format(nextnum)
+                    self.filerenametable[nodename] = realnodename
+                    self.digraph.add_node(realnodename,
+                                          type='SetRenameInformationFile')
+                else:
+                    realnodename = self.filerenametable[nodename]
+
+                if row['PID'] not in currentprocs:
+                    self._addedgetounknownpid(row['PID'], realnodename)
+                elif not self.digraph.has_edge(currentprocs[row['PID']],
+                                               realnodename):
+                    self.digraph.add_edge(currentprocs[row['PID']],
+                                          realnodename)
+
+                self._addedgetofile(realnodename, row['Path'])
+
+                self._addedgetofiles(row['Path'], destfile)
 
         # Create the positions...
         if self.graphvizprog is None:
@@ -488,6 +548,8 @@ class ProcMonCSV(object):
         FileReadY = []
         FileDeleteX = []
         FileDeleteY = []
+        FileRenameX = []
+        FileRenameY = []
         FileX = []
         FileY = []
 
@@ -508,6 +570,10 @@ class ProcMonCSV(object):
         FileDeleteYe = []
         FileImageXe = []
         FileImageYe = []
+        FileRenameXe = []
+        FileRenameYe = []
+        FileRenamedXe = []
+        FileRenamedYe = []
 
         # Hover Text...
         proctxt = []
@@ -518,6 +584,7 @@ class ProcMonCSV(object):
         filewritetxt = []
         filereadtxt = []
         filedeletetxt = []
+        filerenametxt = []
         filetxt = []
 
         # Get the node positions...
@@ -627,6 +694,11 @@ class ProcMonCSV(object):
                 FileDeleteX.append(self.pos[node][0])
                 FileDeleteY.append(self.pos[node][1])
                 filedeletetxt.append("DELETE")
+            if (self.digraph.node[node]['type']
+                    == 'SetRenameInformationFile'):
+                FileRenameX.append(self.pos[node][0])
+                FileRenameY.append(self.pos[node][1])
+                filerenametxt.append("RENAME")
             if self.digraph.node[node]['type'] == 'file':
                 FileX.append(self.pos[node][0])
                 FileY.append(self.pos[node][1])
@@ -697,6 +769,26 @@ class ProcMonCSV(object):
                 FileDeleteYe.append(self.pos[edge[0]][1])
                 FileDeleteYe.append(self.pos[edge[1]][1])
                 FileDeleteYe.append(None)
+            if (self.digraph.node[edge[0]]['type']
+                == 'SetRenameInformationFile' or
+                self.digraph.node[edge[1]]['type']
+                    == 'SetRenameInformationFile'):
+                FileRenameXe.append(self.pos[edge[0]][0])
+                FileRenameXe.append(self.pos[edge[1]][0])
+                FileRenameXe.append(None)
+                FileRenameYe.append(self.pos[edge[0]][1])
+                FileRenameYe.append(self.pos[edge[1]][1])
+                FileRenameYe.append(None)
+            if (self.digraph.node[edge[0]]['type']
+                == 'file' and
+                self.digraph.node[edge[1]]['type']
+                    == 'file'):
+                FileRenamedXe.append(self.pos[edge[0]][0])
+                FileRenamedXe.append(self.pos[edge[1]][0])
+                FileRenamedXe.append(None)
+                FileRenamedYe.append(self.pos[edge[0]][1])
+                FileRenamedYe.append(self.pos[edge[1]][1])
+                FileRenamedYe.append(None)
             if ((self.digraph.node[edge[1]]['type'] == 'Process Start' and
                     self.digraph.node[edge[0]]['type'] == 'file') or
                     (self.digraph.node[edge[1]]['type'] == 'file' and
@@ -901,10 +993,36 @@ class ProcMonCSV(object):
             output.append(FileDeleteNodes)
             output.append(FileDeleteEdges)
 
+        # File Renames...
+
+        if self.plotfilerenames is True:
+            marker = Marker(symbol='triangle-down', size=7)
+
+            # Create the nodes...
+            FileRenameNodes = Scatter(x=FileRenameX,
+                                      y=FileRenameY,
+                                      mode='markers',
+                                      marker=marker,
+                                      name='File Renames',
+                                      text=filerenametxt,
+                                      hoverinfo='text')
+
+            # Create the edges for the nodes...
+            FileRenameEdges = Scatter(x=FileRenameXe,
+                                      y=FileRenameYe,
+                                      mode='lines',
+                                      line=Line(shape='linear'),
+                                      name='File Rename',
+                                      hoverinfo='none')
+
+            output.append(FileRenameNodes)
+            output.append(FileRenameEdges)
+
         # Files...
         if (self.plotfilereads is True or
             self.plotfilewrites is True or
-                self.plotfiledeletes is True):
+            self.plotfiledeletes is True or
+                self.plotfilerenames is True):
             marker = Marker(symbol='hexagon', size=10)
 
             # Create the nodes...
@@ -920,12 +1038,22 @@ class ProcMonCSV(object):
             FileImageEdges = Scatter(x=FileImageXe,
                                      y=FileImageYe,
                                      mode='lines',
-                                     line=Line(shape='linear'),
+                                     line=Line(shape='linear',
+                                               dash='dot'),
                                      name='Process Load Image',
                                      hoverinfo='none')
 
+            FileRenamedEdges = Scatter(x=FileRenamedXe,
+                                       y=FileRenamedYe,
+                                       mode='lines',
+                                       line=Line(shape='linear',
+                                                 dash='dot'),
+                                       name='File Renamed',
+                                       hoverinfo='none')
+
             output.append(FileNodes)
             output.append(FileImageEdges)
+            output.append(FileRenamedEdges)
 
         # Return the plot data...
         return output
@@ -1090,6 +1218,21 @@ class ProcMonCSV(object):
                             ay=-40
                             )
                         )
+            if (self.digraph.node[node]['type']
+                    == 'SetRenameInformationFile'):
+                if self.showfilelabels is True:
+                    annotations.append(
+                        Annotation(
+                            text="RENAME",
+                            x=self.pos[node][0],
+                            y=self.pos[node][1],
+                            xref='x',
+                            yref='y',
+                            showarrow=True,
+                            ax=-40,
+                            ay=-40
+                            )
+                        )            
             if self.digraph.node[node]['type'] == 'file':
                 if self.showfilelabels is True:
                     for f in self.filetable:
@@ -1125,6 +1268,7 @@ class ProcMonCSV(object):
                   plotfilereads=True,
                   plotfilewrites=True,
                   plotfiledeletes=True,
+                  plotfilerenames=True,
                   ignorepaths=None,
                   includepaths=None,
                   filename='temp-plot.html',
@@ -1167,6 +1311,7 @@ class ProcMonCSV(object):
         :param plotfilereads: Set to False to remove File Reads.
         :param plotfilewrites: Set to False to remove File Writes.
         :param plotfiledeletes: Set to False to remove File Deletes.
+        :param plotfilerenames: Set to False to remove File Renames.
         :param ignorepaths: Set this to a list of regular expressions.  If the
             regular expression fires in the Path column, that event will not be
             plotted.  Set to None to ignore this option.  This is case
@@ -1200,6 +1345,7 @@ class ProcMonCSV(object):
         self.plotfilereads = plotfilereads
         self.plotfilewrites = plotfilewrites
         self.plotfiledeletes = plotfiledeletes
+        self.plotfilerenames = plotfilerenames
 
         if ignorepaths is not None and isinstance(ignorepaths, list):
             self.ignorepaths += ignorepaths
