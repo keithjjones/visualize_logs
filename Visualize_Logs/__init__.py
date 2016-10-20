@@ -293,6 +293,7 @@ class ProcMonCSV(object):
         # not sent to graphviz and such...
         self.filewritetable = dict()
         self.filereadtable = dict()
+        self.filedeletetable = dict()
         self.filetable = dict()
 
         # Create a structure to hold metadata about our nodes...
@@ -416,6 +417,31 @@ class ProcMonCSV(object):
                                                realnodename):
                     self.digraph.add_edge(currentprocs[row['PID']],
                                           realnodename)
+            if (row['Operation'] == 'SetDispositionInformationFile' and
+                    self.plotfiledeletes is True):
+                if row['PID'] not in currentprocs:
+                    pidnode = self._addunknownpid(row['PID'])
+                else:
+                    pidnode = currentprocs[row['PID']]
+
+                nodename = ("\"* PID {0} Deletes File {1}\""
+                            .format(pidnode, row['Path']))
+
+                if nodename not in self.filedeletetable:
+                    nextnum = len(self.filedeletetable)
+                    realnodename = '\"* File Delete {0}\"'.format(nextnum)
+                    self.filedeletetable[nodename] = realnodename
+                    self.digraph.add_node(realnodename,
+                                          type='SetDispositionInformationFile')
+                else:
+                    realnodename = self.filedeletetable[nodename]
+
+                if row['PID'] not in currentprocs:
+                    self._addedgetounknownpid(row['PID'], realnodename)
+                elif not self.digraph.has_edge(currentprocs[row['PID']],
+                                               realnodename):
+                    self.digraph.add_edge(currentprocs[row['PID']],
+                                          realnodename)
 
                 self._addedgetofile(realnodename, row['Path'])
 
@@ -460,6 +486,8 @@ class ProcMonCSV(object):
         FileWriteY = []
         FileReadX = []
         FileReadY = []
+        FileDeleteX = []
+        FileDeleteY = []
         FileX = []
         FileY = []
 
@@ -476,6 +504,8 @@ class ProcMonCSV(object):
         FileWriteYe = []
         FileReadXe = []
         FileReadYe = []
+        FileDeleteXe = []
+        FileDeleteYe = []
         FileImageXe = []
         FileImageYe = []
 
@@ -487,6 +517,7 @@ class ProcMonCSV(object):
         hosttxt = []
         filewritetxt = []
         filereadtxt = []
+        filedeletetxt = []
         filetxt = []
 
         # Get the node positions...
@@ -591,6 +622,11 @@ class ProcMonCSV(object):
                 FileReadX.append(self.pos[node][0])
                 FileReadY.append(self.pos[node][1])
                 filereadtxt.append("READ")
+            if (self.digraph.node[node]['type']
+                    == 'SetDispositionInformationFile'):
+                FileDeleteX.append(self.pos[node][0])
+                FileDeleteY.append(self.pos[node][1])
+                filedeletetxt.append("DELETE")
             if self.digraph.node[node]['type'] == 'file':
                 FileX.append(self.pos[node][0])
                 FileY.append(self.pos[node][1])
@@ -651,6 +687,16 @@ class ProcMonCSV(object):
                 FileReadYe.append(self.pos[edge[0]][1])
                 FileReadYe.append(self.pos[edge[1]][1])
                 FileReadYe.append(None)
+            if (self.digraph.node[edge[1]]['type']
+                == 'SetDispositionInformationFile' or
+                self.digraph.node[edge[0]]['type']
+                    == 'SetDispositionInformationFile'):
+                FileDeleteXe.append(self.pos[edge[0]][0])
+                FileDeleteXe.append(self.pos[edge[1]][0])
+                FileDeleteXe.append(None)
+                FileDeleteYe.append(self.pos[edge[0]][1])
+                FileDeleteYe.append(self.pos[edge[1]][1])
+                FileDeleteYe.append(None)
             if ((self.digraph.node[edge[1]]['type'] == 'Process Start' and
                     self.digraph.node[edge[0]]['type'] == 'file') or
                     (self.digraph.node[edge[1]]['type'] == 'file' and
@@ -830,9 +876,35 @@ class ProcMonCSV(object):
             output.append(FileReadNodes)
             output.append(FileReadEdges)
 
+        # File Deletes...
+
+        if self.plotfiledeletes is True:
+            marker = Marker(symbol='triangle-down', size=7)
+
+            # Create the nodes...
+            FileDeleteNodes = Scatter(x=FileDeleteX,
+                                      y=FileDeleteY,
+                                      mode='markers',
+                                      marker=marker,
+                                      name='File Deletes',
+                                      text=filedeletetxt,
+                                      hoverinfo='text')
+
+            # Create the edges for the nodes...
+            FileDeleteEdges = Scatter(x=FileDeleteXe,
+                                      y=FileDeleteYe,
+                                      mode='lines',
+                                      line=Line(shape='linear'),
+                                      name='File Delete',
+                                      hoverinfo='none')
+
+            output.append(FileDeleteNodes)
+            output.append(FileDeleteEdges)
+
         # Files...
         if (self.plotfilereads is True or
-                self.plotfilewrites is True):
+            self.plotfilewrites is True or
+                self.plotfiledeletes is True):
             marker = Marker(symbol='hexagon', size=10)
 
             # Create the nodes...
@@ -1003,6 +1075,21 @@ class ProcMonCSV(object):
                             ay=-40
                             )
                         )
+            if (self.digraph.node[node]['type']
+                    == 'SetDispositionInformationFile'):
+                if self.showfilelabels is True:
+                    annotations.append(
+                        Annotation(
+                            text="DELETE",
+                            x=self.pos[node][0],
+                            y=self.pos[node][1],
+                            xref='x',
+                            yref='y',
+                            showarrow=True,
+                            ax=-40,
+                            ay=-40
+                            )
+                        )
             if self.digraph.node[node]['type'] == 'file':
                 if self.showfilelabels is True:
                     for f in self.filetable:
@@ -1037,6 +1124,7 @@ class ProcMonCSV(object):
                   plotudprecvs=True,
                   plotfilereads=True,
                   plotfilewrites=True,
+                  plotfiledeletes=True,
                   ignorepaths=None,
                   includepaths=None,
                   filename='temp-plot.html',
@@ -1078,6 +1166,7 @@ class ProcMonCSV(object):
             can be noisy if True.
         :param plotfilereads: Set to False to remove File Reads.
         :param plotfilewrites: Set to False to remove File Writes.
+        :param plotfilewrites: Set to False to remove File Deletes.
         :param ignorepaths: Set this to a list of regular expressions.  If the
             regular expression fires in the Path column, that event will not be
             plotted.  Set to None to ignore this option.  This is case
@@ -1110,6 +1199,7 @@ class ProcMonCSV(object):
         self.plotudpsends = plotudpsends
         self.plotfilereads = plotfilereads
         self.plotfilewrites = plotfilewrites
+        self.plotfiledeletes = plotfiledeletes
 
         if ignorepaths is not None and isinstance(ignorepaths, list):
             self.ignorepaths += ignorepaths
