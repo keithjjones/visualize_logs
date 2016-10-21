@@ -11,8 +11,15 @@ Currently supports the following types of logs:
 Graphviz must be installed and available in your path (dot, neato, etc..)
   - http://www.graphviz.org/
 
+To install Graphviz correctly on a Mac, you will probably want to run the following command:
+
+```
+brew install graphviz --with-gts
+```
+
 This program was written with Python 3 on a Mac and Windows 7.  It should work with Python 2 and other OS's, but it has not been tested
-extensively.  Please file an issue if you have problems running it somewhere.
+extensively.  Please file an issue if you have problems running it somewhere.  I use Windows less than I use a Mac, so your mileage may
+vary.
 
 # Example Output
 
