@@ -28,7 +28,8 @@ def plotprocmoncsv():
     parser.add_argument('-f',
                         '--file', metavar='HTMLFile',
                         default='procmoncsv.html',
-                        help='Create the log file.')
+                        help='Create the log file. Default name '
+                        'is procmoncsv.html')
 
     parser.add_argument('-pa',
                         '--plotall', action='store_true',
