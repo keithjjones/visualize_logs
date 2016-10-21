@@ -12,7 +12,7 @@ def read(fname):
 
 setup(
     name='visualize_logs',
-    version='20161020.1',
+    version='20161021.1',
     author='Keith J. Jones',
     author_email='keith@keithjjones.com',
     packages=['Visualize_Logs'],
@@ -23,9 +23,9 @@ setup(
     long_description=read('README.TXT'),
     install_requires=['networkx', 'pandas', 'plotly>=1.9.0',
                       'pydotplus'],
-    # entry_points={
-    #     'console_scripts': [
-    #         'Visualize_Logs = Visualize_Logs.__main__:main'
-    #     ]
-    #  }
+    entry_points={
+        'console_scripts': [
+            'plotprocmoncsv = Visualize_Logs.__main__:plotprocmoncsv'
+        ]
+     }
 )
