@@ -450,6 +450,8 @@ class ProcMonCSV(object):
                                                realnodename):
                     self.digraph.add_edge(currentprocs[row['PID']],
                                           realnodename)
+
+                self._addedgetofile(realnodename, row['Path'])
             if (row['Operation'] == 'SetDispositionInformationFile' and
                     self.plotfiledeletes is True):
                 if row['PID'] not in currentprocs:
