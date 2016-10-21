@@ -70,6 +70,16 @@ optional arguments:
                         Show host labels
 ```
 
+You can run it like this:
+
+```
+# plotprocmoncsv -pa -sp -st -sh /Source/Procmon\ CSV/wwwlgoogle.CSV 
+Reading log: /Source/Procmon CSV/wwwlgoogle.CSV
+Plotting log: /Source/Procmon CSV/wwwlgoogle.CSV
+```
+
+... and then your plot appears in your web browser!  It is also saved to `procmoncsv.html`.
+
 ## ProcMon Logs
 
 The best use case is if you start your ProcMon capture before you run the file you are analyzing.  If a process 
