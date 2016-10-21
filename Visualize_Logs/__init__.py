@@ -187,7 +187,7 @@ class ProcMonCSV(object):
             'Architecture': node['Architecture']
              })
 
-    def _addunknownpid(self, unkpid):
+    def _addunknownpid(self, unkpid, row=None):
         """
 
         Internal function to create an unknown pid.
@@ -200,15 +200,20 @@ class ProcMonCSV(object):
             self.digraph.add_node(nodename,
                                   type='Unknown PID',
                                   pid=unkpid)
+
+        if row is not None:
+            self.unkpidcmdline[nodename] = [row['Image Path'],
+                                            row['Command Line']]
+
         return nodename
 
-    def _addedgetounknownpid(self, unkpid, idx):
+    def _addedgetounknownpid(self, unkpid, idx, row=None):
         """
 
         Internal function to link an idx from an unknown pid.
 
         """
-        nodename = self._addunknownpid(unkpid)
+        nodename = self._addunknownpid(unkpid, row)
         if not self.digraph.has_edge(nodename, idx):
             self.digraph.add_edge(nodename, idx)
 
@@ -313,6 +318,9 @@ class ProcMonCSV(object):
         # Create a dict to hold our currently running processes...
         currentprocs = dict()
 
+        # Use this to get information for unknown pids...
+        self.unkpidcmdline = dict()
+
         # Create dicts for file information so long paths
         # not sent to graphviz and such...
         self.filewritetable = dict()
@@ -355,7 +363,7 @@ class ProcMonCSV(object):
                 self.digraph.add_node(i, type='TCP Connect')
                 self._addnodemetadata(i, row)
                 if row['PID'] not in currentprocs:
-                    self._addedgetounknownpid(row['PID'], i)
+                    self._addedgetounknownpid(row['PID'], i, row)
                 else:
                     self.digraph.add_edge(currentprocs[row['PID']], i)
                 m = re.search("\S+ -> (\S+):([^:]+)", row['Path'])
@@ -369,7 +377,7 @@ class ProcMonCSV(object):
                 self.digraph.add_node(i, type='UDP Receive')
                 self._addnodemetadata(i, row)
                 if row['PID'] not in currentprocs:
-                    self._addedgetounknownpid(row['PID'], i)
+                    self._addedgetounknownpid(row['PID'], i, row)
                 else:
                     self.digraph.add_edge(currentprocs[row['PID']], i)
                 m = re.search("\S+ -> (\S+):([^:]+)", row['Path'])
@@ -383,7 +391,7 @@ class ProcMonCSV(object):
                 self.digraph.add_node(i, type='UDP Send')
                 self._addnodemetadata(i, row)
                 if row['PID'] not in currentprocs:
-                    self._addedgetounknownpid(row['PID'], i)
+                    self._addedgetounknownpid(row['PID'], i, row)
                 else:
                     self.digraph.add_edge(currentprocs[row['PID']], i)
                 m = re.search("\S+ -> (\S+):([^:]+)", row['Path'])
@@ -395,7 +403,7 @@ class ProcMonCSV(object):
             if (row['Operation'] == 'WriteFile' and
                     self.plotfilewrites is True):
                 if row['PID'] not in currentprocs:
-                    pidnode = self._addunknownpid(row['PID'])
+                    pidnode = self._addunknownpid(row['PID'], row)
                 else:
                     pidnode = currentprocs[row['PID']]
 
@@ -411,7 +419,7 @@ class ProcMonCSV(object):
                     realnodename = self.filewritetable[nodename]
 
                 if row['PID'] not in currentprocs:
-                    self._addedgetounknownpid(row['PID'], realnodename)
+                    self._addedgetounknownpid(row['PID'], realnodename, row)
                 elif not self.digraph.has_edge(currentprocs[row['PID']],
                                                realnodename):
                     self.digraph.add_edge(currentprocs[row['PID']],
@@ -421,7 +429,7 @@ class ProcMonCSV(object):
             if (row['Operation'] == 'ReadFile' and
                     self.plotfilereads is True):
                 if row['PID'] not in currentprocs:
-                    pidnode = self._addunknownpid(row['PID'])
+                    pidnode = self._addunknownpid(row['PID'], row)
                 else:
                     pidnode = currentprocs[row['PID']]
 
@@ -437,7 +445,7 @@ class ProcMonCSV(object):
                     realnodename = self.filereadtable[nodename]
 
                 if row['PID'] not in currentprocs:
-                    self._addedgetounknownpid(row['PID'], realnodename)
+                    self._addedgetounknownpid(row['PID'], realnodename, row)
                 elif not self.digraph.has_edge(currentprocs[row['PID']],
                                                realnodename):
                     self.digraph.add_edge(currentprocs[row['PID']],
@@ -445,7 +453,7 @@ class ProcMonCSV(object):
             if (row['Operation'] == 'SetDispositionInformationFile' and
                     self.plotfiledeletes is True):
                 if row['PID'] not in currentprocs:
-                    pidnode = self._addunknownpid(row['PID'])
+                    pidnode = self._addunknownpid(row['PID'], row)
                 else:
                     pidnode = currentprocs[row['PID']]
 
@@ -462,7 +470,7 @@ class ProcMonCSV(object):
                     realnodename = self.filedeletetable[nodename]
 
                 if row['PID'] not in currentprocs:
-                    self._addedgetounknownpid(row['PID'], realnodename)
+                    self._addedgetounknownpid(row['PID'], realnodename, row)
                 elif not self.digraph.has_edge(currentprocs[row['PID']],
                                                realnodename):
                     self.digraph.add_edge(currentprocs[row['PID']],
@@ -472,7 +480,7 @@ class ProcMonCSV(object):
             if (row['Operation'] == 'SetRenameInformationFile' and
                     self.plotfilerenames is True):
                 if row['PID'] not in currentprocs:
-                    pidnode = self._addunknownpid(row['PID'])
+                    pidnode = self._addunknownpid(row['PID'], row)
                 else:
                     pidnode = currentprocs[row['PID']]
 
@@ -495,7 +503,7 @@ class ProcMonCSV(object):
                     realnodename = self.filerenametable[nodename]
 
                 if row['PID'] not in currentprocs:
-                    self._addedgetounknownpid(row['PID'], realnodename)
+                    self._addedgetounknownpid(row['PID'], realnodename, row)
                 elif not self.digraph.has_edge(currentprocs[row['PID']],
                                                realnodename):
                     self.digraph.add_edge(currentprocs[row['PID']],
@@ -611,10 +619,20 @@ class ProcMonCSV(object):
             if self.digraph.node[node]['type'] == 'Unknown PID':
                 ProcessX.append(self.pos[node][0])
                 ProcessY.append(self.pos[node][1])
-                proctxt.append(
-                    "Unknown PID: {0}"
-                    .format(self.digraph.node[node]['pid'])
-                               )
+                if node not in self.unkpidcmdline:
+                    proctxt.append(
+                        "Unknown PID: {0}"
+                        .format(self.digraph.node[node]['pid'])
+                                   )
+                else:
+                    proctxt.append(
+                        "Unknown PID: {0}<br>"
+                        "Image Path: {1}<br>"
+                        "Command Line: {2}"
+                        .format(self.digraph.node[node]['pid'],
+                                self.unkpidcmdline[node][0],
+                                self.unkpidcmdline[node][1])
+                                   )
             if self.digraph.node[node]['type'] == 'TCP Connect':
                 TCPConnectX.append(self.pos[node][0])
                 TCPConnectY.append(self.pos[node][1])
@@ -1088,20 +1106,37 @@ class ProcMonCSV(object):
                         )
             if self.digraph.node[node]['type'] == 'Unknown PID':
                 if self.showproclabels is True:
-                    annotations.append(
-                        Annotation(
-                            text="UNKNOWN<br>PID: {0}".format(
-                                self.digraph.node[node]['pid']
-                                ),
-                            x=self.pos[node][0],
-                            y=self.pos[node][1],
-                            xref='x',
-                            yref='y',
-                            showarrow=True,
-                            ax=-40,
-                            ay=-40
+                    if node not in self.unkpidcmdline:
+                        annotations.append(
+                            Annotation(
+                                text="UNKNOWN<br>PID: {0}".format(
+                                    self.digraph.node[node]['pid']
+                                    ),
+                                x=self.pos[node][0],
+                                y=self.pos[node][1],
+                                xref='x',
+                                yref='y',
+                                showarrow=True,
+                                ax=-40,
+                                ay=-40
+                                )
                             )
-                        )
+                    else:
+                        annotations.append(
+                            Annotation(
+                                text="{1}<br>PID: {0}".format(
+                                    self.digraph.node[node]['pid'],
+                                    self.unkpidcmdline[node][0]
+                                    ),
+                                x=self.pos[node][0],
+                                y=self.pos[node][1],
+                                xref='x',
+                                yref='y',
+                                showarrow=True,
+                                ax=-40,
+                                ay=-40
+                                )
+                            )
             if self.digraph.node[node]['type'] == 'TCP Connect':
                 if self.showtcplabels is True:
                     annotations.append(
