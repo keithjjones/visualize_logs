@@ -22,6 +22,47 @@ Coming soon!
 
 Coming soon!
 
+## ProcMon CSV Command Line Tool
+
+```
+# plotprocmoncsv -h
+usage: plotprocmoncsv [-h] [-f HTMLFile] [-pa] [-pfw] [-pfr] [-pfd] [-pfn]
+                      [-pt] [-pus] [-pur] [-sa] [-sp] [-st] [-su] [-sf] [-sh]
+                      ProcMonCSVFile
+
+Application to graph ProcMon CSV files
+
+positional arguments:
+  ProcMonCSVFile        ProcMon CSV file
+
+optional arguments:
+  -h, --help            show this help message and exit
+  -f HTMLFile, --file HTMLFile
+                        Create the log file.
+  -pa, --plotall        Plot all aspects
+  -pfw, --plotfilewrites
+                        Plot file writes
+  -pfr, --plotfilereads
+                        Plot file reads
+  -pfd, --plotfiledeletes
+                        Plot file deletes
+  -pfn, --plotfilerenames
+                        Plot file renames
+  -pt, --plottcpconnects
+                        Plot TCP connects
+  -pus, --plotudpsends  Plot UDP sends
+  -pur, --plotudprecvs  Plot UDP receives
+  -sa, --showalllabels  Show all labels
+  -sp, --showproclabels
+                        Show process labels
+  -st, --showtcplabels  Show TCP labels
+  -su, --showudplabels  Show UDP labels
+  -sf, --showfilelabels
+                        Show file labels
+  -sh, --showhostlabels
+                        Show host labels
+```
+
 ## ProcMon Logs
 
 The best use case is if you start your ProcMon capture before you run the file you are analyzing.  If a process 
