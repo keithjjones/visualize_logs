@@ -21,21 +21,21 @@ saving the data to a CSV.
 
 SHA256: [9b462800f1bef019d7ec00098682d3ea7fc60e6721555f616399228e4e3ad122](https://www.virustotal.com/en/file/9b462800f1bef019d7ec00098682d3ea7fc60e6721555f616399228e4e3ad122/analysis/)
 
-- Example 1
-  - [Ransomware showing processes only (Focused)](https://keithjjones.github.io/visualize_logs.github.io/gallery/procmoncsv/ransomware_example1.html)
+- [Example 1](https://keithjjones.github.io/visualize_logs.github.io/gallery/procmoncsv/ransomware_example1.html)
+  - Ransomware showing processes only (Focused)
   - `plotprocmoncsv -sp -t "Ransomware Example 1" -f ransomware_example1.html Ransomware_focused.csv`
-- Example 2
-  - [Ransomware showing processes only (All)](https://keithjjones.github.io/visualize_logs.github.io/gallery/procmoncsv/ransomware_example2.html)
+- [Example 2](https://keithjjones.github.io/visualize_logs.github.io/gallery/procmoncsv/ransomware_example2.html)
+  - Ransomware showing processes only (All)
   - `plotprocmoncsv -sp -t "Ransomware Example 2" -f ransomware_example2.html Ransomware_focused.csv`
-- Example 3
-  - [Ransomware showing processes and network only (All)](https://keithjjones.github.io/visualize_logs.github.io/gallery/procmoncsv/ransomware_example3.html)
+- [Example 3](https://keithjjones.github.io/visualize_logs.github.io/gallery/procmoncsv/ransomware_example3.html)
+  - Ransomware showing processes and network only (All)
   - `plotprocmoncsv -sp -pt -pu -t "Ransomware Example 3" -f ransomware_example3.html Ransomware_focused.csv`
-- Example 4
-  - [Ransomware showing file writes/renames/deletes (Focused)](https://keithjjones.github.io/visualize_logs.github.io/gallery/procmoncsv/ransomware_example4.html)
+- [Example 4](https://keithjjones.github.io/visualize_logs.github.io/gallery/procmoncsv/ransomware_example4.html)
+  - Ransomware showing file writes/renames/deletes (Focused)
   - `plotprocmoncsv -t "Ransomware Example 4" -pfw -pfd -pfn -sp -f ransomware_example4.html Ransomware_focused.csv`
   - Notice it is very clear that this is ransomware based upon all the file writes!
-- Example 5
-  - [Ransomware showing file writes/renames/deletes (All)](https://keithjjones.github.io/visualize_logs.github.io/gallery/procmoncsv/ransomware_example5.html)
+- [Example 5](https://keithjjones.github.io/visualize_logs.github.io/gallery/procmoncsv/ransomware_example5.html)
+  - Ransomware showing file writes/renames/deletes (All)
   - `plotprocmoncsv -t "Ransomware Example 5" -pfw -pfd -pfn -sp -f ransomware_example5.html Ransomware.csv`
   - Notice it is very clear that this is ransomware based upon all the file writes!
 
