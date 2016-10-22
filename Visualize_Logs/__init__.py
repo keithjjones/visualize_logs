@@ -278,6 +278,40 @@ class ProcMonCSV(object):
             self.digraph.add_edge(idx,
                                   filename)
 
+    def _addreg(self, reg):
+        """
+
+        Internal function to create a registry.
+
+        :returns: filename for the node
+
+        """
+        if reg in self.regtable:
+            regnum = self.regtable[reg]
+        else:
+            regnum = len(self.regtable)
+            self.regtable[reg] = regnum
+
+        regname = "\"* Reg {0}\"".format(regnum)
+
+        if regname not in self.digraph:
+            self.digraph.add_node(regname,
+                                  type='reg',
+                                  regnum=regnum)
+        return regname
+
+    def _addedgetoreg(self, idx, reg):
+        """
+
+        Internal function to link an idx to a registry.
+
+        """
+        regname = self._addreg(reg)
+
+        if not self.digraph.has_edge(idx, regname):
+            self.digraph.add_edge(idx,
+                                  regname)
+
     def _plotevent(self, row):
         """
 
@@ -328,6 +362,13 @@ class ProcMonCSV(object):
         self.filedeletetable = dict()
         self.filerenametable = dict()
         self.filetable = dict()
+
+        # Create dicts for file information so long paths
+        # not sent to graphviz and such...
+        self.regwritetable = dict()
+        self.regreadtable = dict()
+        self.regdeletetable = dict()
+        self.regtable = dict()
 
         # Create a structure to hold metadata about our nodes...
         self.nodemetadata = dict()
@@ -514,6 +555,84 @@ class ProcMonCSV(object):
                 self._addedgetofile(realnodename, row['Path'])
 
                 self._addedgetofiles(row['Path'], destfile)
+            if (row['Operation'] == 'RegSetValue' and
+                    self.plotregwrites is True):
+                if row['PID'] not in currentprocs:
+                    pidnode = self._addunknownpid(row['PID'], row)
+                else:
+                    pidnode = currentprocs[row['PID']]
+
+                nodename = ("\"* PID {0} Writes Reg {1}\""
+                            .format(pidnode, row['Path']))
+
+                if nodename not in self.regwritetable:
+                    nextnum = len(self.regwritetable)
+                    realnodename = '\"* Reg Write {0}\"'.format(nextnum)
+                    self.regwritetable[nodename] = realnodename
+                    self.digraph.add_node(realnodename, type='RegSetValue')
+                else:
+                    realnodename = self.regwritetable[nodename]
+
+                if row['PID'] not in currentprocs:
+                    self._addedgetounknownpid(row['PID'], realnodename, row)
+                elif not self.digraph.has_edge(currentprocs[row['PID']],
+                                               realnodename):
+                    self.digraph.add_edge(currentprocs[row['PID']],
+                                          realnodename)
+
+                self._addedgetoreg(realnodename, row['Path'])
+            if (row['Operation'] == 'RegQueryValue' and
+                    self.plotregreads is True):
+                if row['PID'] not in currentprocs:
+                    pidnode = self._addunknownpid(row['PID'], row)
+                else:
+                    pidnode = currentprocs[row['PID']]
+
+                nodename = ("\"* PID {0} Reads Reg {1}\""
+                            .format(pidnode, row['Path']))
+
+                if nodename not in self.regreadtable:
+                    nextnum = len(self.regreadtable)
+                    realnodename = '\"* Reg Read {0}\"'.format(nextnum)
+                    self.regreadtable[nodename] = realnodename
+                    self.digraph.add_node(realnodename, type='RegQueryValue')
+                else:
+                    realnodename = self.regreadtable[nodename]
+
+                if row['PID'] not in currentprocs:
+                    self._addedgetounknownpid(row['PID'], realnodename, row)
+                elif not self.digraph.has_edge(currentprocs[row['PID']],
+                                               realnodename):
+                    self.digraph.add_edge(currentprocs[row['PID']],
+                                          realnodename)
+
+                self._addedgetoreg(realnodename, row['Path'])
+            if (row['Operation'] == 'RegDeleteValue' and
+                    self.plotregdeletes is True):
+                if row['PID'] not in currentprocs:
+                    pidnode = self._addunknownpid(row['PID'], row)
+                else:
+                    pidnode = currentprocs[row['PID']]
+
+                nodename = ("\"* PID {0} Deletes Reg {1}\""
+                            .format(pidnode, row['Path']))
+
+                if nodename not in self.regdeletetable:
+                    nextnum = len(self.regdeletetable)
+                    realnodename = '\"* Reg Delete {0}\"'.format(nextnum)
+                    self.regdeletetable[nodename] = realnodename
+                    self.digraph.add_node(realnodename, type='RegDeleteValue')
+                else:
+                    realnodename = self.regdeletetable[nodename]
+
+                if row['PID'] not in currentprocs:
+                    self._addedgetounknownpid(row['PID'], realnodename, row)
+                elif not self.digraph.has_edge(currentprocs[row['PID']],
+                                               realnodename):
+                    self.digraph.add_edge(currentprocs[row['PID']],
+                                          realnodename)
+
+                self._addedgetoreg(realnodename, row['Path'])
 
         # Create the positions...
         if self.graphvizprog is None:
@@ -562,6 +681,14 @@ class ProcMonCSV(object):
         FileRenameY = []
         FileX = []
         FileY = []
+        RegWriteX = []
+        RegWriteY = []
+        RegReadX = []
+        RegReadY = []
+        RegDeleteX = []
+        RegDeleteY = []
+        RegX = []
+        RegY = []
 
         # Edge coordinates...
         ProcessXe = []
@@ -584,6 +711,12 @@ class ProcMonCSV(object):
         FileRenameYe = []
         FileRenamedXe = []
         FileRenamedYe = []
+        RegWriteXe = []
+        RegWriteYe = []
+        RegReadXe = []
+        RegReadYe = []
+        RegDeleteXe = []
+        RegDeleteYe = []
 
         # Hover Text...
         proctxt = []
@@ -596,6 +729,10 @@ class ProcMonCSV(object):
         filedeletetxt = []
         filerenametxt = []
         filetxt = []
+        regwritetxt = []
+        regreadtxt = []
+        regdeletetxt = []
+        regtxt = []
 
         # Get the node positions...
         for node in self.digraph:
@@ -728,6 +865,27 @@ class ProcMonCSV(object):
                         filename = f
                         break
                 filetxt.append("{0}".format(filename))
+            if self.digraph.node[node]['type'] == 'RegSetValue':
+                RegWriteX.append(self.pos[node][0])
+                RegWriteY.append(self.pos[node][1])
+                regwritetxt.append("WRITE")
+            if self.digraph.node[node]['type'] == 'RegQueryValue':
+                RegReadX.append(self.pos[node][0])
+                RegReadY.append(self.pos[node][1])
+                regreadtxt.append("READ")
+            if (self.digraph.node[node]['type'] == 'RegDeleteValue'):
+                RegDeleteX.append(self.pos[node][0])
+                RegDeleteY.append(self.pos[node][1])
+                regdeletetxt.append("DELETE")
+            if self.digraph.node[node]['type'] == 'reg':
+                RegX.append(self.pos[node][0])
+                RegY.append(self.pos[node][1])
+
+                for r in self.regtable:
+                    if self.regtable[r] == self.digraph.node[node]['regnum']:
+                        regname = r
+                        break
+                regtxt.append("{0}".format(regname))
 
         # Get edge positions...
         for edge in self.digraph.edges():
@@ -819,6 +977,30 @@ class ProcMonCSV(object):
                 FileImageYe.append(self.pos[edge[0]][1])
                 FileImageYe.append(self.pos[edge[1]][1])
                 FileImageYe.append(None)
+            if (self.digraph.node[edge[1]]['type'] == 'RegSetValue' or
+                    self.digraph.node[edge[0]]['type'] == 'RegSetValue'):
+                RegWriteXe.append(self.pos[edge[0]][0])
+                RegWriteXe.append(self.pos[edge[1]][0])
+                RegWriteXe.append(None)
+                RegWriteYe.append(self.pos[edge[0]][1])
+                RegWriteYe.append(self.pos[edge[1]][1])
+                RegWriteYe.append(None)
+            if (self.digraph.node[edge[1]]['type'] == 'RegQueryValue' or
+                    self.digraph.node[edge[0]]['type'] == 'RegQueryValue'):
+                RegReadXe.append(self.pos[edge[0]][0])
+                RegReadXe.append(self.pos[edge[1]][0])
+                RegReadXe.append(None)
+                RegReadYe.append(self.pos[edge[0]][1])
+                RegReadYe.append(self.pos[edge[1]][1])
+                RegReadYe.append(None)
+            if (self.digraph.node[edge[1]]['type'] == 'RegDeleteValue' or
+                    self.digraph.node[edge[0]]['type'] == 'RegDeleteValue'):
+                RegDeleteXe.append(self.pos[edge[0]][0])
+                RegDeleteXe.append(self.pos[edge[1]][0])
+                RegDeleteXe.append(None)
+                RegDeleteYe.append(self.pos[edge[0]][1])
+                RegDeleteYe.append(self.pos[edge[1]][1])
+                RegDeleteYe.append(None)
 
         output = []
 
@@ -1075,6 +1257,98 @@ class ProcMonCSV(object):
             output.append(FileImageEdges)
             output.append(FileRenamedEdges)
 
+        # Reg Writes...
+
+        if self.plotregwrites is True:
+            marker = Marker(symbol='triangle-down', size=7)
+
+            # Create the nodes...
+            RegWriteNodes = Scatter(x=RegWriteX,
+                                    y=RegWriteY,
+                                    mode='markers',
+                                    marker=marker,
+                                    name='Registry Writes',
+                                    text=regwritetxt,
+                                    hoverinfo='text')
+
+            # Create the edges for the nodes...
+            RegWriteEdges = Scatter(x=RegWriteXe,
+                                    y=RegWriteYe,
+                                    mode='lines',
+                                    line=Line(shape='linear'),
+                                    name='Registry Write',
+                                    hoverinfo='none')
+
+            output.append(RegWriteNodes)
+            output.append(RegWriteEdges)
+
+        # Reg Reads...
+
+        if self.plotregreads is True:
+            marker = Marker(symbol='triangle-up', size=7)
+
+            # Create the nodes...
+            RegReadNodes = Scatter(x=RegReadX,
+                                   y=RegReadY,
+                                   mode='markers',
+                                   marker=marker,
+                                   name='Registry Reads',
+                                   text=regreadtxt,
+                                   hoverinfo='text')
+
+            # Create the edges for the nodes...
+            RegReadEdges = Scatter(x=RegReadXe,
+                                   y=RegReadYe,
+                                   mode='lines',
+                                   line=Line(shape='linear'),
+                                   name='Registry Read',
+                                   hoverinfo='none')
+
+            output.append(RegReadNodes)
+            output.append(RegReadEdges)
+
+        # File Deletes...
+
+        if self.plotregdeletes is True:
+            marker = Marker(symbol='triangle-down', size=7)
+
+            # Create the nodes...
+            RegDeleteNodes = Scatter(x=RegDeleteX,
+                                     y=RegDeleteY,
+                                     mode='markers',
+                                     marker=marker,
+                                     name='Registry Deletes',
+                                     text=regdeletetxt,
+                                     hoverinfo='text')
+
+            # Create the edges for the nodes...
+            RegDeleteEdges = Scatter(x=RegDeleteXe,
+                                     y=RegDeleteYe,
+                                     mode='lines',
+                                     line=Line(shape='linear'),
+                                     name='Registry Delete',
+                                     hoverinfo='none')
+
+            output.append(RegDeleteNodes)
+            output.append(RegDeleteEdges)
+
+        # Registry...
+        if (self.plotregreads is True or
+            self.plotregwrites is True or
+                self.plotregdeletes is True):
+            marker = Marker(symbol='star', size=10)
+
+            # Create the nodes...
+            RegNodes = Scatter(x=RegX,
+                               y=RegY,
+                               mode='markers',
+                               marker=marker,
+                               name='Registry Values',
+                               text=regtxt,
+                               hoverinfo='text')
+
+            output.append(RegNodes)
+
         # Return the plot data...
         return output
 
@@ -1269,7 +1543,7 @@ class ProcMonCSV(object):
                             ax=-40,
                             ay=-40
                             )
-                        )            
+                        )
             if self.digraph.node[node]['type'] == 'file':
                 if self.showfilelabels is True:
                     for f in self.filetable:
@@ -1289,6 +1563,67 @@ class ProcMonCSV(object):
                             ay=-40
                             )
                         )
+            if self.digraph.node[node]['type'] == 'RegSetValue':
+                if self.showreglabels is True:
+                    annotations.append(
+                        Annotation(
+                            text="WRITE",
+                            x=self.pos[node][0],
+                            y=self.pos[node][1],
+                            xref='x',
+                            yref='y',
+                            showarrow=True,
+                            ax=-40,
+                            ay=-40
+                            )
+                        )
+            if self.digraph.node[node]['type'] == 'RegQueryValue':
+                if self.showreglabels is True:
+                    annotations.append(
+                        Annotation(
+                            text="READ",
+                            x=self.pos[node][0],
+                            y=self.pos[node][1],
+                            xref='x',
+                            yref='y',
+                            showarrow=True,
+                            ax=-40,
+                            ay=-40
+                            )
+                        )
+            if (self.digraph.node[node]['type'] == 'RegDeleteValue'):
+                if self.showreglabels is True:
+                    annotations.append(
+                        Annotation(
+                            text="DELETE",
+                            x=self.pos[node][0],
+                            y=self.pos[node][1],
+                            xref='x',
+                            yref='y',
+                            showarrow=True,
+                            ax=-40,
+                            ay=-40
+                            )
+                        )
+            if self.digraph.node[node]['type'] == 'reg':
+                if self.showreglabels is True:
+                    for r in self.regtable:
+                        if (self.regtable[r] ==
+                                self.digraph.node[node]['regnum']):
+                            regname = r
+                            break
+                    annotations.append(
+                        Annotation(
+                            text="Registry<br>{0}".format(regname),
+                            x=self.pos[node][0],
+                            y=self.pos[node][1],
+                            xref='x',
+                            yref='y',
+                            showarrow=True,
+                            ax=-40,
+                            ay=-40
+                            )
+                        )
 
         return annotations
 
@@ -1299,6 +1634,7 @@ class ProcMonCSV(object):
                   showudplabels=True,
                   showfilelabels=True,
                   showhostlabels=True,
+                  showreglabels=True,
                   plottcpconnects=True,
                   plotudpsends=True,
                   plotudprecvs=True,
@@ -1306,6 +1642,9 @@ class ProcMonCSV(object):
                   plotfilewrites=True,
                   plotfiledeletes=True,
                   plotfilerenames=True,
+                  plotregwrites=True,
+                  plotregreads=True,
+                  plotregdeletes=True,
                   ignorepaths=None,
                   includepaths=None,
                   filename='temp-plot.html',
@@ -1340,6 +1679,9 @@ class ProcMonCSV(object):
         :param showhostlabels:  If True will turn on labels for the hosts.
             Set to False to clean up your plot and not show the labels.
             The data can be viewed with mouse overs either way.
+        :param showhostlabels:  If True will turn on labels for registry.
+            Set to False to clean up your plot and not show the labels.
+            The data can be viewed with mouse overs either way.
         :param plottcpconnects: Set to False to remove TCP connections.
         :param plotudpsends: Set to False to remove UDP sends.  This option
             can be noisy if True.
@@ -1349,6 +1691,9 @@ class ProcMonCSV(object):
         :param plotfilewrites: Set to False to remove File Writes.
         :param plotfiledeletes: Set to False to remove File Deletes.
         :param plotfilerenames: Set to False to remove File Renames.
+        :param plotregwrites: Set to False to remove registry writes.
+        :param plotregreads: Set to False to remove registry reads.
+        :param plotregdeletes: Set to False to remove registry deletes.
         :param ignorepaths: Set this to a list of regular expressions.  If the
             regular expression fires in the Path column, that event will not be
             plotted.  Set to None to ignore this option.  This is case
@@ -1376,6 +1721,7 @@ class ProcMonCSV(object):
         self.showfilelabels = showfilelabels
         self.showproclabels = showproclabels
         self.showhostlabels = showhostlabels
+        self.showreglabels = showreglabels
         self.plottcpconnects = plottcpconnects
         self.plotudprecvs = plotudprecvs
         self.plotudpsends = plotudpsends
@@ -1383,6 +1729,9 @@ class ProcMonCSV(object):
         self.plotfilewrites = plotfilewrites
         self.plotfiledeletes = plotfiledeletes
         self.plotfilerenames = plotfilerenames
+        self.plotregwrites = plotregwrites
+        self.plotregreads = plotregreads
+        self.plotregdeletes = plotregdeletes
 
         if ignorepaths is not None and isinstance(ignorepaths, list):
             self.ignorepaths += ignorepaths

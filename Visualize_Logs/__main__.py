@@ -63,6 +63,18 @@ def plotprocmoncsv():
                         '--plotudprecvs', action='store_true',
                         help='Plot UDP receives')
 
+    parser.add_argument('-prr',
+                        '--plotregreads', action='store_true',
+                        help='Plot Registry reads')
+
+    parser.add_argument('-prw',
+                        '--plotregwrites', action='store_true',
+                        help='Plot Registry writes')
+
+    parser.add_argument('-prd',
+                        '--plotregdeletes', action='store_true',
+                        help='Plot Registry deletes')
+
     parser.add_argument('-sa',
                         '--showalllabels', action='store_true',
                         help='Show all labels')
@@ -87,6 +99,10 @@ def plotprocmoncsv():
                         '--showhostlabels', action='store_true',
                         help='Show host labels')
 
+    parser.add_argument('-sr',
+                        '--showreglabels', action='store_true',
+                        help='Show Registry labels')
+
     # Parse command line arguments.
     args = parser.parse_args()
 
@@ -99,12 +115,14 @@ def plotprocmoncsv():
         showudplabels = True
         showfilelabels = True
         showhostlabels = True
+        showreglabels = True
     else:
         showproclabels = args.showproclabels
         showtcplabels = args.showtcplabels
         showudplabels = args.showudplabels
         showfilelabels = args.showfilelabels
         showhostlabels = args.showhostlabels
+        showreglabels = args.showreglabels
 
     if args.plotall is True:
         plottcpconnects = True
@@ -114,6 +132,9 @@ def plotprocmoncsv():
         plotfilewrites = True
         plotfiledeletes = True
         plotfilerenames = True
+        plotregreads = True
+        plotregwrites = True
+        plotregdeletes = True
     else:
         plottcpconnects = args.plottcpconnects
         plotudpsends = args.plotudpsends
@@ -122,6 +143,9 @@ def plotprocmoncsv():
         plotfilewrites = args.plotfilewrites
         plotfiledeletes = args.plotfiledeletes
         plotfilerenames = args.plotfilerenames
+        plotregreads = args.plotregreads
+        plotregwrites = args.plotregwrites
+        plotregdeletes = args.plotregdeletes
 
     if not os.path.exists(csvfile):
         print('File does not exist: {0}'.format(csvfile))
@@ -137,6 +161,7 @@ def plotprocmoncsv():
         showudplabels=showudplabels,
         showfilelabels=showfilelabels,
         showhostlabels=showhostlabels,
+        showreglabels=showreglabels,
         plottcpconnects=plottcpconnects,
         plotudpsends=plotudpsends,
         plotudprecvs=plotudprecvs,
@@ -144,5 +169,8 @@ def plotprocmoncsv():
         plotfilewrites=plotfilewrites,
         plotfiledeletes=plotfiledeletes,
         plotfilerenames=plotfilerenames,
+        plotregreads=plotregreads,
+        plotregwrites=plotregwrites,
+        plotregdeletes=plotregdeletes,
         filename=filename
         )
