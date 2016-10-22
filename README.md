@@ -2,6 +2,18 @@
 
 A Python library and command line tools to provide log visualization. 
 
+# Installation
+
+```
+# pip install visualize_logs
+```
+
+... or you can clone and ...
+
+```
+# python setup.py install
+```
+
 # Gallery
 
 When you view these plots you will need JavaScript turned on.  The plots are interactive and you can
