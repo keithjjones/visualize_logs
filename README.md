@@ -6,8 +6,7 @@ A Python library and command line tools to provide log visualization.
 
 When you view these plots you will need JavaScript turned on.  The plots are interactive and you can
 select borders around the pieces you would like to zoom into.  You can double click to zoom out.  You can also
-hover over nodes and more information will be displayed.  
-The plot controls will be in the upper right hand corner of the plot.
+hover over nodes and more information will be displayed.  The plot controls will be in the upper right hand corner of the plot.
 
 The plot will look different depending on your browser (Chrome, Firefox, etc...) and the size
 of your browser.  I typically use Chrome on a Mac with a very large size to see everything I want to see.
