@@ -15,7 +15,7 @@ package supports:
 More log types will be added as time allows.
 
 .. toctree::
-   :caption: Table of Contents:
+   :caption: API Documentation:
    :maxdepth: 2
 
    modules
@@ -41,8 +41,8 @@ plotprocmoncsv
 .. _Example 4: https://keithjjones.github.io/visualize_logs.github.io/gallery/procmoncsv/ransomware_example4.html
 .. _Example 5: https://keithjjones.github.io/visualize_logs.github.io/gallery/procmoncsv/ransomware_example5.html
 
-Indices and Tables
-------------------
+Index and Tables
+----------------
 
 * :ref:`genindex`
 * :ref:`modindex`
