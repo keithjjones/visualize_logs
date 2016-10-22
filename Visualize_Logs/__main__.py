@@ -31,6 +31,10 @@ def plotprocmoncsv():
                         help='Create the log file. Default name '
                         'is procmoncsv.html')
 
+    parser.add_argument('-t',
+                        '--title',
+                        help='The title for the plot')
+
     parser.add_argument('-pa',
                         '--plotall', action='store_true',
                         help='Plot all aspects')
@@ -245,5 +249,6 @@ def plotprocmoncsv():
         plotregdeletes=plotregdeletes,
         ignorepaths=ignorepaths,
         includepaths=includepaths,
-        filename=filename
+        filename=filename,
+        title=args.title
         )
