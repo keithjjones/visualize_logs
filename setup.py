@@ -12,13 +12,13 @@ def read(fname):
 
 setup(
     name='visualize_logs',
-    version='20161022.1',
+    version='20161022.3',
     author='Keith J. Jones',
     author_email='keith@keithjjones.com',
     packages=['Visualize_Logs'],
     url='https://github.com/keithjjones/visualize_logs',
-    license='LICENSE',
-    description=('A Python library and command line tool to '
+    license='CC BY-SA',
+    description=('A Python library and command line tools to '
                  'provide log visualization.'),
     long_description=read('README.TXT'),
     install_requires=['networkx', 'pandas', 'plotly>=1.9.0',
