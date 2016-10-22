@@ -1,5 +1,5 @@
 import os
-from setuptools import setup, find_packages
+from setuptools import setup
 
 
 # Utility function to read the README file.
@@ -18,7 +18,7 @@ setup(
     packages=['Visualize_Logs'],
     url='https://github.com/keithjjones/visualize_logs',
     license='LICENSE',
-    description=('A Python library to '
+    description=('A Python library and command line tool to '
                  'provide log visualization.'),
     long_description=read('README.TXT'),
     install_requires=['networkx', 'pandas', 'plotly>=1.9.0',

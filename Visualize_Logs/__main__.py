@@ -164,8 +164,6 @@ def plotprocmoncsv():
     else:
         ignorepaths = None
 
-    print(ignorepaths)
-
     showproclabels = args.showproclabels
     showtcplabels = args.showtcplabels
     showudplabels = args.showudplabels

@@ -1,4 +1,4 @@
-A Python library to provide log visualization.
+A Python library and command line tools to provide log visualization.
 
 Project Page:
 https://github.com/keithjjones/visualize_logs

@@ -1004,7 +1004,8 @@ class ProcMonCSV(object):
                 RegDeleteYe.append(self.pos[edge[1]][1])
                 RegDeleteYe.append(None)
 
-        output = []
+        nodes = []
+        edges = []
 
         # PROCESSES...
 
@@ -1027,8 +1028,8 @@ class ProcMonCSV(object):
                             name='Process Start',
                             hoverinfo='none')
 
-        output.append(ProcNodes)
-        output.append(ProcEdges)
+        nodes.append(ProcNodes)
+        edges.append(ProcEdges)
 
         # TCP CONNECTIONS...
 
@@ -1052,8 +1053,8 @@ class ProcMonCSV(object):
                                       name='TCP Connect',
                                       hoverinfo='none')
 
-            output.append(TCPConnectNodes)
-            output.append(TCPConnectEdges)
+            nodes.append(TCPConnectNodes)
+            edges.append(TCPConnectEdges)
 
         # UDP Receives...
 
@@ -1077,8 +1078,8 @@ class ProcMonCSV(object):
                                       name='UDP Receive',
                                       hoverinfo='none')
 
-            output.append(UDPReceiveNodes)
-            output.append(UDPReceiveEdges)
+            nodes.append(UDPReceiveNodes)
+            edges.append(UDPReceiveEdges)
 
         # UDP Sends...
 
@@ -1102,8 +1103,8 @@ class ProcMonCSV(object):
                                    name='UDP Send',
                                    hoverinfo='none')
 
-            output.append(UDPSendNodes)
-            output.append(UDPSendEdges)
+            nodes.append(UDPSendNodes)
+            edges.append(UDPSendEdges)
 
         # HOSTS...
         if (self.plottcpconnects is True or
@@ -1120,7 +1121,7 @@ class ProcMonCSV(object):
                                 text=hosttxt,
                                 hoverinfo='text')
 
-            output.append(HostNodes)
+            nodes.append(HostNodes)
 
         # File Writes...
 
@@ -1144,8 +1145,8 @@ class ProcMonCSV(object):
                                      name='File Write',
                                      hoverinfo='none')
 
-            output.append(FileWriteNodes)
-            output.append(FileWriteEdges)
+            nodes.append(FileWriteNodes)
+            edges.append(FileWriteEdges)
 
         # File Reads...
 
@@ -1169,8 +1170,8 @@ class ProcMonCSV(object):
                                     name='File Read',
                                     hoverinfo='none')
 
-            output.append(FileReadNodes)
-            output.append(FileReadEdges)
+            nodes.append(FileReadNodes)
+            edges.append(FileReadEdges)
 
         # File Deletes...
 
@@ -1194,8 +1195,8 @@ class ProcMonCSV(object):
                                       name='File Delete',
                                       hoverinfo='none')
 
-            output.append(FileDeleteNodes)
-            output.append(FileDeleteEdges)
+            nodes.append(FileDeleteNodes)
+            edges.append(FileDeleteEdges)
 
         # File Renames...
 
@@ -1219,8 +1220,8 @@ class ProcMonCSV(object):
                                       name='File Rename',
                                       hoverinfo='none')
 
-            output.append(FileRenameNodes)
-            output.append(FileRenameEdges)
+            nodes.append(FileRenameNodes)
+            edges.append(FileRenameEdges)
 
         # Files...
         if (self.plotfilereads is True or
@@ -1255,9 +1256,9 @@ class ProcMonCSV(object):
                                        name='File Renamed',
                                        hoverinfo='none')
 
-            output.append(FileNodes)
-            output.append(FileImageEdges)
-            output.append(FileRenamedEdges)
+            nodes.append(FileNodes)
+            edges.append(FileImageEdges)
+            edges.append(FileRenamedEdges)
 
         # Reg Writes...
 
@@ -1281,8 +1282,8 @@ class ProcMonCSV(object):
                                     name='Registry Write',
                                     hoverinfo='none')
 
-            output.append(RegWriteNodes)
-            output.append(RegWriteEdges)
+            nodes.append(RegWriteNodes)
+            edges.append(RegWriteEdges)
 
         # Reg Reads...
 
@@ -1306,10 +1307,10 @@ class ProcMonCSV(object):
                                    name='Registry Read',
                                    hoverinfo='none')
 
-            output.append(RegReadNodes)
-            output.append(RegReadEdges)
+            nodes.append(RegReadNodes)
+            edges.append(RegReadEdges)
 
-        # File Deletes...
+        # Reg Deletes...
 
         if self.plotregdeletes is True:
             marker = Marker(symbol='triangle-down', size=7)
@@ -1331,8 +1332,8 @@ class ProcMonCSV(object):
                                      name='Registry Delete',
                                      hoverinfo='none')
 
-            output.append(RegDeleteNodes)
-            output.append(RegDeleteEdges)
+            nodes.append(RegDeleteNodes)
+            edges.append(RegDeleteEdges)
 
         # Registry...
         if (self.plotregreads is True or
@@ -1349,7 +1350,12 @@ class ProcMonCSV(object):
                                text=regtxt,
                                hoverinfo='text')
 
-            output.append(RegNodes)
+            nodes.append(RegNodes)
+
+        # Reverse the order and mush...
+        output = []
+        output += edges[::-1]
+        output += nodes[::-1]
 
         # Return the plot data...
         return output
