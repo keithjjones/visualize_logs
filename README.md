@@ -36,6 +36,8 @@ Coming soon!
 usage: plotprocmoncsv [-h] [-f HTMLFile] [-pa] [-pf] [-pu] [-pt] [-pr] [-pfw]
                       [-pfr] [-pfd] [-pfn] [-ptcp] [-pus] [-pur] [-prr] [-prw]
                       [-prd] [-sa] [-sp] [-st] [-su] [-sf] [-sh] [-sr]
+                      [-ignpaths IgnPathsFile.txt]
+                      [-inclpaths InclPathsFile.txt]
                       ProcMonCSVFile
 
 Application to graph ProcMon CSV files
@@ -79,6 +81,12 @@ optional arguments:
   -sh, --showhostlabels
                         Show host labels
   -sr, --showreglabels  Show Registry labels
+  -ignpaths IgnPathsFile.txt, --ignorepathsfile IgnPathsFile.txt
+                        File containing regular expressions to ignore in the
+                        Path column. One RE per line.
+  -inclpaths InclPathsFile.txt, --includepathsfile InclPathsFile.txt
+                        File containing regular expressions to include in the
+                        Path column. Overrides ignores. One RE per line.
 ```
 
 You can run it like this:

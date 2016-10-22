@@ -325,14 +325,16 @@ class ProcMonCSV(object):
 
         if not pandas.isnull(row['Path']):
             for r in self.ignorepaths:
-                r = r.replace('\\', '\\\\')
+                # In case the double escape is needed...
+                # r = r.replace('\\', '\\\\')
                 m = re.search(r, row['Path'], re.IGNORECASE)
                 if m:
                     PlotEvent = False
                     break
 
             if PlotEvent is False:
-                r = r.replace('\\', '\\\\')
+                # In case the double escape is needed...
+                # r = r.replace('\\', '\\\\')
                 for r in self.includepaths:
                     m = re.search(r, row['Path'], re.IGNORECASE)
                     if m:
@@ -1697,11 +1699,13 @@ class ProcMonCSV(object):
         :param ignorepaths: Set this to a list of regular expressions.  If the
             regular expression fires in the Path column, that event will not be
             plotted.  Set to None to ignore this option.  This is case
-            insensitive.
+            insensitive.  Remember to double escape since this is
+            interpreted twice!
         :param includepaths:  Set this to a list of regular expressions.
             If the regular expression fires in the Path column, that event will
             be plotted.  This overrides ignores from ignorepaths above.
             Set to None to ignore this option.  This is case insensitive.
+            Remember to double escape since this is interpreted twice!
         :param filename: A file name for the interactive HTML plot.
         :param title: A title for the plot.
         :param auto_open: Set to false to not open the file in a web browser.

@@ -5,6 +5,10 @@
 temp-plot.html
 procmoncsv.html
 
+# Temporary ignore files
+ignpathsfile.txt
+inclpathsfile.txt
+
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]

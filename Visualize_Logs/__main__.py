@@ -119,11 +119,52 @@ def plotprocmoncsv():
                         '--showreglabels', action='store_true',
                         help='Show Registry labels')
 
+    parser.add_argument('-ignpaths',
+                        '--ignorepathsfile', metavar='IgnPathsFile.txt',
+                        help='File containing regular expressions to ignore '
+                        'in the Path column.  One RE per line.')
+
+    parser.add_argument('-inclpaths',
+                        '--includepathsfile', metavar='InclPathsFile.txt',
+                        help='File containing regular expressions to include '
+                        'in the Path column.  Overrides ignores. '
+                        'One RE per line.')
+
     # Parse command line arguments.
     args = parser.parse_args()
 
     csvfile = args.ProcMonCSVFile
     filename = args.file
+
+    if args.includepathsfile is not None:
+        inclfile = args.includepathsfile
+        if not os.path.exists(inclfile):
+            print('File does not exist: {0}'.format(inclfile))
+            exit(1)
+        with open(inclfile) as infile:
+            try:
+                includepaths = infile.read().splitlines()
+            except:
+                print('ERROR:  File problem: {0}'.format(inclfile))
+                exit(1)
+    else:
+        includepaths = None
+
+    if args.ignorepathsfile is not None:
+        ignfile = args.ignorepathsfile
+        if not os.path.exists(ignfile):
+            print('File does not exist: {0}'.format(ignfile))
+            exit(1)
+        with open(ignfile) as infile:
+            try:
+                ignorepaths = infile.read().splitlines()
+            except:
+                print('ERROR:  File problem: {0}'.format(ignfile))
+                exit(1)
+    else:
+        ignorepaths = None
+
+    print(ignorepaths)
 
     showproclabels = args.showproclabels
     showtcplabels = args.showtcplabels
@@ -204,5 +245,7 @@ def plotprocmoncsv():
         plotregreads=plotregreads,
         plotregwrites=plotregwrites,
         plotregdeletes=plotregdeletes,
+        ignorepaths=ignorepaths,
+        includepaths=includepaths,
         filename=filename
         )
