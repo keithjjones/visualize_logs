@@ -33,8 +33,9 @@ Coming soon!
 
 ```
 # plotprocmoncsv -h
-usage: plotprocmoncsv [-h] [-f HTMLFile] [-pa] [-pfw] [-pfr] [-pfd] [-pfn]
-                      [-pt] [-pus] [-pur] [-sa] [-sp] [-st] [-su] [-sf] [-sh]
+usage: plotprocmoncsv [-h] [-f HTMLFile] [-pa] [-pf] [-pu] [-pt] [-pr] [-pfw]
+                      [-pfr] [-pfd] [-pfn] [-ptcp] [-pus] [-pur] [-prr] [-prw]
+                      [-prd] [-sa] [-sp] [-st] [-su] [-sf] [-sh] [-sr]
                       ProcMonCSVFile
 
 Application to graph ProcMon CSV files
@@ -45,8 +46,12 @@ positional arguments:
 optional arguments:
   -h, --help            show this help message and exit
   -f HTMLFile, --file HTMLFile
-                        Create the log file.
+                        Create the log file. Default name is procmoncsv.html
   -pa, --plotall        Plot all aspects
+  -pf, --plotfile       Plot all file aspects
+  -pu, --plotudp        Plot all UDP aspects
+  -pt, --plottcp        Plot all TCP aspects
+  -pr, --plotreg        Plot all Registry aspects
   -pfw, --plotfilewrites
                         Plot file writes
   -pfr, --plotfilereads
@@ -55,10 +60,15 @@ optional arguments:
                         Plot file deletes
   -pfn, --plotfilerenames
                         Plot file renames
-  -pt, --plottcpconnects
+  -ptcp, --plottcpconnects
                         Plot TCP connects
   -pus, --plotudpsends  Plot UDP sends
   -pur, --plotudprecvs  Plot UDP receives
+  -prr, --plotregreads  Plot Registry reads
+  -prw, --plotregwrites
+                        Plot Registry writes
+  -prd, --plotregdeletes
+                        Plot Registry deletes
   -sa, --showalllabels  Show all labels
   -sp, --showproclabels
                         Show process labels
@@ -68,14 +78,15 @@ optional arguments:
                         Show file labels
   -sh, --showhostlabels
                         Show host labels
+  -sr, --showreglabels  Show Registry labels
 ```
 
 You can run it like this:
 
 ```
-# plotprocmoncsv -pa -sp -st -sh /Source/Procmon\ CSV/wwwlgoogle.CSV 
-Reading log: /Source/Procmon CSV/wwwlgoogle.CSV
-Plotting log: /Source/Procmon CSV/wwwlgoogle.CSV
+# plotprocmoncsv -pa -sp -st -sh wwwlgoogle.CSV 
+Reading log: wwwlgoogle.CSV
+Plotting log: wwwlgoogle.CSV
 ```
 
 ... and then your plot appears in your web browser!  It is also saved to `procmoncsv.html`.
