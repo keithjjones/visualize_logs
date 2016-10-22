@@ -2,18 +2,6 @@
 
 A Python library and command line tools to provide log visualization. 
 
-# Installation
-
-```
-# pip install visualize_logs
-```
-
-... or you can clone and ...
-
-```
-# python setup.py install
-```
-
 # Gallery
 
 When you view these plots you will need JavaScript turned on.  The plots are interactive and you can
@@ -73,6 +61,18 @@ brew install graphviz --with-gts
 This program was written with Python 3 on a Mac and Windows 7.  It should work with Python 2 and other OS's, but it has not been tested
 extensively.  Please file an issue if you have problems running it somewhere.  I use Windows less than I use a Mac, so your Windows mileage may
 vary.
+
+# Installation
+
+```
+# pip install visualize_logs
+```
+
+... or you can clone and ...
+
+```
+# python setup.py install
+```
 
 # Usage
 
