@@ -92,7 +92,7 @@ data.  You can always filter your data and save it as a CSV showing just the eve
 
 ### Sample data:
 
-You can find some sample CSV from ProcMon in the [ProcMon\Sample Data] (ProcMon/Sample Data/) directory.
+You can find some sample CSV from ProcMon in the [ProcMon/Sample Data] (ProcMon/Sample Data/) directory.
 
 # Documentation
 
