@@ -129,6 +129,12 @@ More logs types are coming...
 
 # Requirements
 
+## Python v3
+
+Install Python v3.  I like to use virtualenv with my Python installs.
+
+## Graphviz
+
 Graphviz must be installed and available in your path (dot, neato, etc..)
   - http://www.graphviz.org/
 
