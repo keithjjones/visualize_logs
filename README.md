@@ -10,6 +10,7 @@ A Python library and command line tools to provide log visualization.
 - [Usage](#usage)
   - [plotprocmoncsv](#plotprocmoncsv)
 - [Sample Data](#sample-data)
+  - [ProcMon CSV Sample Data](#procmon-csv-sample-data)
 - [Documentation](#documentation)
 - [Resources](#resources)
 - [Similar Projects](#similar-projects)
@@ -257,7 +258,9 @@ Plotting log: wwwlgoogle.CSV
 
 ... and then your plot appears in your web browser!  It is also saved to `procmoncsv.html`.
 
-# Sample data:
+# Sample data
+
+##  ProcMon CSV Sample Data
 
 You can find some sample CSV from ProcMon in the [ProcMon/Sample Data] (ProcMon/Sample Data/) directory.
 There are four traces:
