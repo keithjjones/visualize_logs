@@ -30,6 +30,8 @@ plotprocmoncsv
 
 Kovter:
 
+The next two samples were identified in the following blog post: https://blog.malwarebytes.com/threat-analysis/2016/07/untangling-kovter/
+
 SHA256: 15c237f6b74af2588b07912bf18e2734594251787871c9638104e4bf5de46589_
 
 * `Kovter 1 Example 1`_: Processes Only (Focused)

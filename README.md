@@ -20,6 +20,8 @@ saving the data to a CSV.
 
 SHA256: [15c237f6b74af2588b07912bf18e2734594251787871c9638104e4bf5de46589](https://www.virustotal.com/en/file/15c237f6b74af2588b07912bf18e2734594251787871c9638104e4bf5de46589/analysis/)
 
+This sample was identified in the following [blog post](https://blog.malwarebytes.com/threat-analysis/2016/07/untangling-kovter/).
+
 - [Example 1](https://keithjjones.github.io/visualize_logs.github.io/gallery/procmoncsv/kovter1_example1.html)
   - Kovter showing processes only (Focused)
   - `plotprocmoncsv -sp -t "Kovter Example 1" -f kovter1_example1.html kovter1_focused.csv`
@@ -41,6 +43,8 @@ SHA256: [15c237f6b74af2588b07912bf18e2734594251787871c9638104e4bf5de46589](https
 ## Kovter Sample 2
 
 SHA256: [bffe7ccbcf69e7c787ff10d1dc7dbf6044bffcb13b95d851f4a735917b3a6fdf](https://www.virustotal.com/en/file/bffe7ccbcf69e7c787ff10d1dc7dbf6044bffcb13b95d851f4a735917b3a6fdf/analysis/)
+
+This sample was identified in the following [blog post](https://blog.malwarebytes.com/threat-analysis/2016/07/untangling-kovter/).
 
 - [Example 1](https://keithjjones.github.io/visualize_logs.github.io/gallery/procmoncsv/kovter2_example1.html)
   - Kovter showing processes only (Focused)
