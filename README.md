@@ -37,6 +37,38 @@ SHA256: [9b462800f1bef019d7ec00098682d3ea7fc60e6721555f616399228e4e3ad122](https
   - Ransomware showing file writes/renames/deletes (All)
   - `plotprocmoncsv -t "Ransomware Example 5" -pfw -pfd -pfn -sp -f ransomware_example5.html Ransomware.csv`
   - Notice it is very clear that this is ransomware based upon all the file writes!
+- [Example 6](https://keithjjones.github.io/visualize_logs.github.io/gallery/procmoncsv/ransomware_example6.html)
+  - Ransomware showing Registry writes and deletes (Focused)
+  - `plotprocmoncsv -t "Ransomware Example 6" -prw -prd -sp -f ../gallery/procmoncsv/ransomware_example6.html /Source/Procmon\ CSV/Ransomware_focused.csv`
+
+## wwwlgoogle dot com Adware
+
+SHA256: [e64910e3549a6c6e01be814b40e0f1fca02db45d5d19e2882a90914cef1c799e](https://www.virustotal.com/en/file/e64910e3549a6c6e01be814b40e0f1fca02db45d5d19e2882a90914cef1c799e/analysis/)
+
+This sample came from wwwlgoogle dot com.
+
+- [Example 1](https://keithjjones.github.io/visualize_logs.github.io/gallery/procmoncsv/wwwlgoogle_example1.html)
+  - wwwlgoogle showing processes only (Focused)
+  - `plotprocmoncsv -sp -t "wwwlgoogle.com Example 1" -f wwwlgoogle_example1.html wwwlgoogle_focused.csv`
+- [Example 2](https://keithjjones.github.io/visualize_logs.github.io/gallery/procmoncsv/wwwlgoogle_example2.html)
+  - wwwlgoogle showing processes only (All)
+  - `plotprocmoncsv -sp -t "wwwlgoogle.com Example 2" -f wwwlgoogle_example2.html wwwlgoogle.csv`
+- [Example 3](https://keithjjones.github.io/visualize_logs.github.io/gallery/procmoncsv/wwwlgoogle_example3.html)
+  - wwwlgoogle showing processes and network only (Focused)
+  - `plotprocmoncsv -sp -pt -pu -sh -t "wwwlgoogle.com Example 3" -f wwwlgoogle_example3.html wwwlgoogle_focused.csv`
+- [Example 4](https://keithjjones.github.io/visualize_logs.github.io/gallery/procmoncsv/wwwlgoogle_example4.html)
+  - wwwlgoogle showing processes and network only (All)
+  - `plotprocmoncsv -sp -pt -pu -sh -t "wwwlgoogle.com Example 4" -f wwwlgoogle_example4.html wwwlgoogle.csv`
+- [Example 5](https://keithjjones.github.io/visualize_logs.github.io/gallery/procmoncsv/wwwlgoogle_example5.html)
+  - wwwlgoogle showing processes and file writes/renames/deletes (Focused)
+  - `plotprocmoncsv -sp -pfw -pfd -pfn -t "wwwlgoogle.com Example 5" -f wwwlgoogle_example4.html wwwlgoogle_focused.csv`
+- [Example 6](https://keithjjones.github.io/visualize_logs.github.io/gallery/procmoncsv/wwwlgoogle_example6.html)
+  - wwwlgoogle showing processes and file writes/renames/deletes (All)
+  - `plotprocmoncsv -sp -pfw -pfd -pfn -t "wwwlgoogle.com Example 6" -f wwwlgoogle_example4.html wwwlgoogle.csv`
+- [Example 7](https://keithjjones.github.io/visualize_logs.github.io/gallery/procmoncsv/wwwlgoogle_example7.html)
+  - wwwlgoogle showing processes and Registry writes/deletes (Focused)
+  - `plotprocmoncsv -sp -prw -prd -t "wwwlgoogle.com Example 7" -f wwwlgoogle_example4.html wwwlgoogle_focused.csv`
+
 
 # Log Type Support
 
