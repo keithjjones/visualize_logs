@@ -380,6 +380,13 @@ class ProcMonCSV(object):
 
         # Crawl the CSV data...
         for i, row in self.csvdata.iterrows():
+            # Scrape process information for unknown PIDs...
+            if row['Operation'] != 'Process Start':
+                if row['PID'] not in currentprocs:
+                    pidnode = self._addunknownpid(row['PID'], row)
+                else:
+                    pidnode = currentprocs[row['PID']]
+
             # Skip this if not plotting event...
             if self._plotevent(row) is False:
                 continue
@@ -445,11 +452,6 @@ class ProcMonCSV(object):
                     raise VisualizeLogsParseError(row['Path'])
             if (row['Operation'] == 'WriteFile' and
                     self.plotfilewrites is True):
-                if row['PID'] not in currentprocs:
-                    pidnode = self._addunknownpid(row['PID'], row)
-                else:
-                    pidnode = currentprocs[row['PID']]
-
                 nodename = ("\"* PID {0} Writes File {1}\""
                             .format(pidnode, row['Path']))
 
@@ -471,11 +473,6 @@ class ProcMonCSV(object):
                 self._addedgetofile(realnodename, row['Path'])
             if (row['Operation'] == 'ReadFile' and
                     self.plotfilereads is True):
-                if row['PID'] not in currentprocs:
-                    pidnode = self._addunknownpid(row['PID'], row)
-                else:
-                    pidnode = currentprocs[row['PID']]
-
                 nodename = ("\"* PID {0} Reads File {1}\""
                             .format(pidnode, row['Path']))
 
@@ -497,11 +494,6 @@ class ProcMonCSV(object):
                 self._addedgetofile(realnodename, row['Path'])
             if (row['Operation'] == 'SetDispositionInformationFile' and
                     self.plotfiledeletes is True):
-                if row['PID'] not in currentprocs:
-                    pidnode = self._addunknownpid(row['PID'], row)
-                else:
-                    pidnode = currentprocs[row['PID']]
-
                 nodename = ("\"* PID {0} Deletes File {1}\""
                             .format(pidnode, row['Path']))
 
@@ -524,11 +516,6 @@ class ProcMonCSV(object):
                 self._addedgetofile(realnodename, row['Path'])
             if (row['Operation'] == 'SetRenameInformationFile' and
                     self.plotfilerenames is True):
-                if row['PID'] not in currentprocs:
-                    pidnode = self._addunknownpid(row['PID'], row)
-                else:
-                    pidnode = currentprocs[row['PID']]
-
                 m = re.search(".* FileName: (.*)$", row['Detail'])
                 if m:
                     destfile = m.group(1)
@@ -559,11 +546,6 @@ class ProcMonCSV(object):
                 self._addedgetofiles(row['Path'], destfile)
             if (row['Operation'] == 'RegSetValue' and
                     self.plotregwrites is True):
-                if row['PID'] not in currentprocs:
-                    pidnode = self._addunknownpid(row['PID'], row)
-                else:
-                    pidnode = currentprocs[row['PID']]
-
                 nodename = ("\"* PID {0} Writes Reg {1}\""
                             .format(pidnode, row['Path']))
 
@@ -585,11 +567,6 @@ class ProcMonCSV(object):
                 self._addedgetoreg(realnodename, row['Path'])
             if (row['Operation'] == 'RegQueryValue' and
                     self.plotregreads is True):
-                if row['PID'] not in currentprocs:
-                    pidnode = self._addunknownpid(row['PID'], row)
-                else:
-                    pidnode = currentprocs[row['PID']]
-
                 nodename = ("\"* PID {0} Reads Reg {1}\""
                             .format(pidnode, row['Path']))
 
@@ -611,11 +588,6 @@ class ProcMonCSV(object):
                 self._addedgetoreg(realnodename, row['Path'])
             if (row['Operation'] == 'RegDeleteValue' and
                     self.plotregdeletes is True):
-                if row['PID'] not in currentprocs:
-                    pidnode = self._addunknownpid(row['PID'], row)
-                else:
-                    pidnode = currentprocs[row['PID']]
-
                 nodename = ("\"* PID {0} Deletes Reg {1}\""
                             .format(pidnode, row['Path']))
 
