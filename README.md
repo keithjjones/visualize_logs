@@ -285,7 +285,7 @@ The library documentation can be found at:  https://keithjjones.github.io/visual
 
 These projects are very similar to this one and are worth trying if you are
 unfamiliar with them.  They were the inspiration behind this project.  This project
-was meant to compliment these tools, not replace them.  This is just a different way to
+was meant to compliment these tools, not replace them.  This project is just a different way to
 get to the same goal, with the goal being to support numerous log types in one Python
 package in the future.
 
