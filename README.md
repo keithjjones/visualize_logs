@@ -3,10 +3,12 @@
 A Python library and command line tools to provide log visualization. 
 
 - [Gallery](#gallery)
+  - [ProcMon CSV Logs](#procmon-csv-logs)
 - [Log Type Support](#log-type-support)
 - [Requirements](#requirements)
 - [Installation](#installation)
 - [Usage](#usage)
+  - [plotprocmoncsv](#plotprocmoncsv)
 - [Sample Data](#sample-data)
 - [Documentation](#documentation)
 - [Resources](#resources)
@@ -177,7 +179,7 @@ brew install graphviz --with-gts
 This package can be used as a library.  Use the information in the documentation section below to use it this way.
 This package also contains command line tools which are outlined below.
 
-## ProcMon CSV Command Line Tool
+## plotprocmoncsv
 
 The best use case is if you start your ProcMon capture before you run the file you are analyzing.  If a process 
 is not started the associated network connections may not be connected to the process in the plot.  I also could
