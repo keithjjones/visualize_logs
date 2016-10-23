@@ -10,7 +10,7 @@ A Python library and command line tools to provide log visualization.
 - [Sample Data](#sample-data)
 - [Documentation](#documentation)
 - [Resources](#resources)
-- [Simialr Projects](#similar-projects)
+- [Similar Projects](#similar-projects)
 - [License](#license)
 - [Contributing](#contributing)
 
