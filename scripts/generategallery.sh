@@ -1,0 +1,2 @@
+./generateransomwaregallery.sh
+./generatewwwlgooglegallery.sh
