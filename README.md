@@ -57,7 +57,7 @@ This sample was identified in the following [blog post](https://blog.malwarebyte
 - [Example 3](https://keithjjones.github.io/visualize_logs.github.io/gallery/procmoncsv/kovter2_example3.html)
   - Kovter showing processes and file writes/deletes/renames (All)
   - `plotprocmoncsv -sp -pfw -pfd -pfr -t "Kovter Example 3" -f kovter2_example3.html kovter2.csv`
-- [Example 4](https://keithjjones.github.io/visualize_logs.github.io/gallery/procmoncsv/kovter1_example4.html)
+- [Example 4](https://keithjjones.github.io/visualize_logs.github.io/gallery/procmoncsv/kovter2_example4.html)
   - Kovter showing processes and Registry writes/deletes (All)
   - `plotprocmoncsv -sp -prw -prd -t "Kovter Example 4" -f kovter2_example4.html kovter2.csv`
 - [Example 5](https://keithjjones.github.io/visualize_logs.github.io/gallery/procmoncsv/kovter2_example5.html)
