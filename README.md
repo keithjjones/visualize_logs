@@ -2,6 +2,18 @@
 
 A Python library and command line tools to provide log visualization. 
 
+- [Gallery](#gallery)
+- [Log Type Support](#log-type-support)
+- [Requirements](#requirements)
+- [Installation](#installation)
+- [Usage](#usage)
+- [Sample Data](#sample-data)
+- [Documentation](#documentation)
+- [Resources](#resources)
+- [Simialr Projects](#similar-projects)
+- [License](#license)
+- [Contributing](#contributing)
+
 # Gallery
 
 When you view these plots you will need JavaScript turned on.  The plots are interactive and you can
