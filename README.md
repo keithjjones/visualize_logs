@@ -280,6 +280,8 @@ The library documentation can be found at:  https://keithjjones.github.io/visual
 
 - ProcMon
   - https://technet.microsoft.com/en-us/sysinternals/processmonitor.aspx
+- Plot.ly
+  - https://www.plot.ly
 
 # Similar Projects
 
