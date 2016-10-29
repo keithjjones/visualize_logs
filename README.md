@@ -263,9 +263,12 @@ Plotting log: wwwlgoogle.CSV
 ##  ProcMon CSV Sample Data
 
 You can find some sample CSV from ProcMon in the [ProcMon/Sample Data] (ProcMon/Sample Data/) directory.
-There are four traces:
+There are eight traces:
 
-- wwwlgoogle.com malware:
+- 2 Kovter examples:
+  - Focused just shows the process I ran, filtered by the ProcMon process tree tool.
+  - All data without the focus.
+- wwwlgoogle.com adware:
   - Focused just shows the process I ran, filtered by the ProcMon process tree tool.
   - All data without the focus.
 - Ransomware:
