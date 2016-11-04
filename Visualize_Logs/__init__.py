@@ -19,10 +19,46 @@ from plotly.graph_objs import Bar, Scatter, Figure, Layout, \
 # Regular Expressions
 import re
 
+# JSON
+import json
+
 
 #
 # Classes
 #
+
+class CuckooJSONReport(object):
+    """
+    Class to hold Cuckoo-Modified JSON reports.
+
+    https://github.com/spender-sandbox/cuckoo-modified
+    """
+    jsonreportfile = None
+    """The JSON report file path."""
+    jsonreportdata = 
+    """This holds the actual data of the JSON report."""
+
+    def __init__(self, jsonreportfile=None):
+        """
+        The JSON report file is read and parsed using this class.  This
+        could take a whiel depending on how big your JSON report is.
+
+        This has been tested with the cuckoo-modifed version, but it may
+        work with Cuckoo (proper) as well.
+
+        :param jsonreportfile: The path to the JSON report file.
+        :type jsonreportfile: A string.
+        :returns: An object.
+        :rtype: CuckooJSONReport object.
+        """
+        if not os.path.exists(jsonreportfile):
+            raise VisualizeLogsInvalidFile(jsonreportfile)
+        else:
+            self.jsonreportfile = jsonreportfile
+
+        with open(self.jsonreportfile, 'r') as jsonfile:
+            self.jsonreportdata = json.load(jsonfile)
+
 
 class ProcMonCSV(object):
     """
@@ -65,10 +101,10 @@ class ProcMonCSV(object):
         Architecture
 
 
-        :param csvlogfile: A CSV log file from ProcMon
-        :type csvlogfile: A string
-        :returns: An object
-        :rtype: ProcMonCSV object
+        :param csvlogfile: A CSV log file from ProcMon.
+        :type csvlogfile: A string.
+        :returns: An object.
+        :rtype: ProcMonCSV object.
 
         """
         if not os.path.exists(csvlogfile):

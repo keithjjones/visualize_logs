@@ -1,4 +1,4 @@
-pandas==0.19.0
-setuptools==28.6.1
-networkx==1.11
+pandas==0.19.1
 plotly==1.12.9
+setuptools==28.7.1
+networkx==1.11
