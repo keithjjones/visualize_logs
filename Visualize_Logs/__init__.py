@@ -617,8 +617,8 @@ class ProcMonCSV(object):
             # self.pos = networkx.spectral_layout(self.digraph)
         else:
             self.pos = \
-                networkx.drawing.nx_pydot.graphviz_layout(self.digraph,
-                                                          prog=self.graphvizprog)
+                networkx.drawing.nx_pydot.graphviz_layout(
+                    self.digraph, prog=self.graphvizprog)
 
         return self._generateplot()
 
