@@ -85,6 +85,9 @@ class CuckooJSONReport(object):
         # Add all the processes to the graph...
         self._add_all_processes()
 
+        # Layout the positions...
+        self._create_positions_digraph()
+
     def _add_all_processes(self):
         """
         Internal function to add processess from JSON report
