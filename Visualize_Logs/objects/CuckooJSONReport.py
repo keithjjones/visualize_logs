@@ -135,6 +135,7 @@ class CuckooJSONReport(object):
         if ppid_node not in self.nodemetadata:
             self.nodemetadata[ppid_node] = dict()
             self.nodemetadata[ppid_node]['children'] = list()
+            self.nodemetadata[ppid_node]['cmdline'] = ""
 
         self.nodemetadata[ppid_node]['children'].append(nodename)
 
@@ -156,6 +157,26 @@ class CuckooJSONReport(object):
             self.nodemetadata[nodename]['first_seen'] = process['first_seen']
             self.nodemetadata[nodename]['calls'] =\
                 pandas.DataFrame(process['calls'])
+
+            calls = self.nodemetadata[nodename]['calls']
+
+            createprocs = calls[calls['api'] == 'CreateProcessInternalW']
+
+            for i, createproc in createprocs.iterrows():
+                childpid = None
+                cmdline = None
+                for arg in createproc['arguments']:
+                    if arg['name'] == 'ProcessId':
+                        childpid = arg['value']
+                    if arg['name'] == 'CommandLine':
+                        cmdline = arg['value']
+
+                if cmdline is None:
+                    cmdline = "Not Available"
+
+                if childpid is not None:
+                    childnode = "PID {0}".format(childpid)
+                    self.nodemetadata[childnode]['cmdline'] = cmdline
 
     def _create_positions_digraph(self):
         """
@@ -200,13 +221,19 @@ class CuckooJSONReport(object):
             if self.digraph.node[node]['type'] == 'PID':
                 ProcessX.append(self.pos[node][0])
                 ProcessY.append(self.pos[node][1])
+                if 'cmdline' in self.nodemetadata[node]:
+                    cmdline = self.nodemetadata[node]['cmdline']
+                else:
+                    cmdline = "Not Available"
                 proctxt.append(
                     "PID: {0}<br>"
                     "Path: {1}<br>"
-                    "Parent PID: {2}"
+                    "Command Line: {2}<br>"
+                    "Parent PID: {3}"
                     .format(
                         self.nodemetadata[node]['pid'],
                         self.nodemetadata[node]['module_path'],
+                        cmdline,
                         self.nodemetadata[node]['parent_id']
                         )
                                )
