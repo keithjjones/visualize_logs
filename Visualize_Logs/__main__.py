@@ -7,7 +7,8 @@ import argparse
 # For paths
 import os
 # Required for plotting logs
-import Visualize_Logs
+import Visualize_Logs.objects.ProcMonCSV as ProcMonCSV
+import Visualize_Logs.objects.CuckooJSONReport as CuckooJSONReport
 
 
 #
@@ -227,7 +228,7 @@ def plotprocmoncsv():
         exit(1)
 
     print('Reading log: {0}'.format(csvfile))
-    vl = Visualize_Logs.ProcMonCSV(csvfile)
+    vl = ProcMonCSV(csvfile)
 
     print('Plotting log: {0}'.format(csvfile))
     vl.plotgraph(
