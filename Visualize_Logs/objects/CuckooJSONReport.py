@@ -52,6 +52,9 @@ class CuckooJSONReport(object):
     """This is a dict of (edge1,edge2) that will hold dicts of metadata
     for each edge."""
 
+    rootpid = None
+    """This is the pid (Node) on top."""
+
     def __init__(self, jsonreportfile=None):
         """
         The JSON report file is read and parsed using this class.  This
@@ -83,11 +86,12 @@ class CuckooJSONReport(object):
 
         :returns: Nothing.
         """
-        self.processtree = self.jsonreportdata['behavior']['processtree']
+        self._processtree = self.jsonreportdata['behavior']['processtree']
+        self._processes = self.jsonreportdata['behavior']['processes']
 
-        self.rootpid = self.processtree[0]['pid']
+        self.rootpid = self._processtree[0]['pid']
 
-        for process in self.processtree:
+        for process in self._processtree:
             self._add_processes_recursive(process)
 
     def _add_processes_recursive(self, processtreedict):
