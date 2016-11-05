@@ -85,9 +85,6 @@ class CuckooJSONReport(object):
         # Add all the processes to the graph...
         self._add_all_processes()
 
-        # Layout the positions...
-        self._create_positions_digraph()
-
     def _add_all_processes(self):
         """
         Internal function to add processess from JSON report
@@ -98,7 +95,7 @@ class CuckooJSONReport(object):
         self._processtree = self.jsonreportdata['behavior']['processtree']
         self._processes = self.jsonreportdata['behavior']['processes']
 
-        self.rootpid = self._processtree[0]['pid']
+        self.rootpid = "PID {0}".format(self._processtree[0]['pid'])
 
         for process in self._processtree:
             self._add_processes_recursive(process)
@@ -114,17 +111,20 @@ class CuckooJSONReport(object):
         :param processtreedict:  A dict of data from the process tree.
         :returns: Nothing.
         """
-        nodename = "PID {0}".format(processtreedict['pid'])
-        parent_id = "{0}".format(processtreedict['parent_id'])
-        ppid_node = "PID "+parent_id
+        pid = processtreedict['pid']
+        ppid = processtreedict['parent_id']
+        nodename = "PID {0}".format(pid)
+        ppid_node = "PID {0}".format(ppid)
 
         self.digraph.add_node(nodename,
                               type='PID',
-                              parent_id=parent_id)
+                              pid=pid,
+                              parent_id=ppid)
 
         self.nodemetadata[nodename] = dict()
         self.nodemetadata[nodename]['node_type'] = 'PID'
-        self.nodemetadata[nodename]['parent_id'] = parent_id
+        self.nodemetadata[nodename]['pid'] = pid
+        self.nodemetadata[nodename]['parent_id'] = ppid
         self.nodemetadata[nodename]['threads'] = processtreedict['threads']
         self.nodemetadata[nodename]['environ'] = processtreedict['environ']
         self.nodemetadata[nodename]['name'] = processtreedict['name']
@@ -137,6 +137,9 @@ class CuckooJSONReport(object):
             self.nodemetadata[ppid_node]['children'] = list()
 
         self.nodemetadata[ppid_node]['children'].append(nodename)
+
+        if ppid_node in self.digraph:
+            self.digraph.add_edge(ppid_node, nodename)
 
         for child in processtreedict['children']:
             self._add_processes_recursive(child)
@@ -171,4 +174,171 @@ class CuckooJSONReport(object):
         else:
             self.pos = \
                 networkx.drawing.nx_pydot.graphviz_layout(
-                    self.digraph, prog=self.graphvizprog)
+                    self.digraph, prog=self.graphvizprog,
+                    root=self.rootpid)
+
+    def _generategraph(self):
+        """
+        Internal function to create the output data for plotly.
+
+        :returns: The data that can be plotted with plotly scatter
+            plots.
+        """
+
+        # Node coordinates...
+        ProcessX = []
+        ProcessY = []
+
+        # Edge coordinates...
+        ProcessXe = []
+        ProcessYe = []
+
+        # Hover Text...
+        proctxt = []
+
+        for node in self.digraph:
+            if self.digraph.node[node]['type'] == 'PID':
+                ProcessX.append(self.pos[node][0])
+                ProcessY.append(self.pos[node][1])
+                proctxt.append(
+                    "PID: {0}<br>"
+                    "Path: {1}<br>"
+                    "Parent PID: {2}"
+                    .format(
+                        self.nodemetadata[node]['pid'],
+                        self.nodemetadata[node]['module_path'],
+                        self.nodemetadata[node]['parent_id']
+                        )
+                               )
+        for edge in self.digraph.edges():
+            if (self.digraph.node[edge[0]]['type'] == 'PID' and
+                    self.digraph.node[edge[1]]['type'] == 'PID'):
+                ProcessXe.append(self.pos[edge[0]][0])
+                ProcessXe.append(self.pos[edge[1]][0])
+                ProcessXe.append(None)
+                ProcessYe.append(self.pos[edge[0]][1])
+                ProcessYe.append(self.pos[edge[1]][1])
+                ProcessYe.append(None)
+
+        nodes = []
+        edges = []
+
+        # PROCESSES...
+
+        marker = Marker(symbol='circle', size=10)
+
+        # Create the nodes...
+        ProcNodes = Scatter(x=ProcessX,
+                            y=ProcessY,
+                            mode='markers',
+                            marker=marker,
+                            name='Process',
+                            text=proctxt,
+                            hoverinfo='text')
+
+        # Create the edges for the nodes...
+        ProcEdges = Scatter(x=ProcessXe,
+                            y=ProcessYe,
+                            mode='lines',
+                            line=Line(shape='linear'),
+                            name='Process Start',
+                            hoverinfo='none')
+
+        nodes.append(ProcNodes)
+        edges.append(ProcEdges)
+
+        # Reverse the order and mush...
+        output = []
+        output += edges[::-1]
+        output += nodes[::-1]
+
+        # Return the plot data...
+        return output
+
+    def _generateannotations(self):
+        """
+        Internal function to generate annotations on the graph.
+
+        :returns: A list of annotations for plotly.
+        """
+        annotations = Annotations()
+
+        for node in self.digraph:
+            if self.digraph.node[node]['type'] == 'PID':
+                annotations.append(
+                    Annotation(
+                        text="{0}<br>PID: {1}".format(
+                            self.nodemetadata[node]['name'],
+                            self.nodemetadata[node]['pid']
+                            ),
+                        x=self.pos[node][0],
+                        y=self.pos[node][1],
+                        xref='x',
+                        yref='y',
+                        showarrow=True,
+                        ax=-40,
+                        ay=-40
+                        )
+                    )
+
+        return annotations
+
+    def plotgraph(self,
+                  graphvizprog='dot',
+                  filename='temp-plot.html',
+                  title=None, auto_open=True,
+                  image=None, image_filename='plot_image',
+                  image_height=600, image_width=800):
+        """
+
+        Function to plot the graph of the ProcMon CSV.
+
+        :param graphvizprog: The graphviz program to use for layout, valid
+            options are 'dot', 'neato', 'twopi', 'circo', 'fdp',
+            'sfdp', 'patchwork', and 'osage'.  Graphviz is REQUIRED to be
+            installed and in your path to use this library!  The associated
+            layout programs must be available in your path as well.  More
+            information for the layout types can be found here:
+            http://www.graphviz.org/Documentation.php
+            If this value is None, the internal networkx layout algorithms
+            will be used.
+        :param filename: A file name for the interactive HTML plot.
+        :param title: A title for the plot.
+        :param auto_open: Set to false to not open the file in a web browser.
+        :param image: An image type of 'png', 'jpeg', 'svg', 'webp', or None.
+        :param image_filename: The file name for the exported image.
+        :param image_height: The number of pixels for the image height.
+        :param image_width: The number of pixels for the image width.
+        :returns: Nothing
+
+        """
+        self.graphvizprog = graphvizprog
+
+        # Layout the positions...
+        self._create_positions_digraph()
+
+        outputdata = self._generategraph()
+        annotations = self._generateannotations()
+
+        # Hide axis line, grid, ticklabels and title...
+        axis = dict(showline=False,
+                    zeroline=False,
+                    showgrid=False,
+                    showticklabels=False,
+                    title='')
+
+        plotlayout = Layout(showlegend=True, title=title,
+                            xaxis=XAxis(axis),
+                            yaxis=YAxis(axis),
+                            hovermode='closest',
+                            annotations=annotations)
+
+        plotfigure = Figure(data=outputdata,
+                            layout=plotlayout)
+
+        # Plot without the plotly annoying link...
+        plot(plotfigure, show_link=False, filename=filename,
+             auto_open=auto_open, image=image,
+             image_filename=image_filename,
+             image_height=image_height,
+             image_width=image_width)
