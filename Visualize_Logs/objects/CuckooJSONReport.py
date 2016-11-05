@@ -48,6 +48,13 @@ class CuckooJSONReport(object):
     graphvizprog = None
     """This is the graphviz program used to generate the layout."""
 
+    nodemetadata = dict()
+    """This is a dict that will hold dicts of metadata for each node."""
+
+    edgemetadata = dict()
+    """This is a dict of (edge1,edge2) that will hold dicts of metadata
+    for each edge."""
+
     def __init__(self, jsonreportfile=None):
         """
         The JSON report file is read and parsed using this class.  This
@@ -94,10 +101,29 @@ class CuckooJSONReport(object):
         :param processtreedict:  A dict of data from the process tree.
         :returns: Nothin.
         """
-        self.digraph.add_node("PID {0}".format(processtreedict['pid']),
+        nodename = "PID {0}".format(processtreedict['pid'])
+        parent_id = "{0}".format(processtreedict['parent_id'])
+        ppid_node = "PID {0}".format(processtreedict['parent_id'])
+
+        self.digraph.add_node(nodename,
                               type='PID',
-                              parent_id="{0}"
-                              .format(processtreedict['parent_id']))
+                              parent_id=parent_id)
+
+        self.nodemetadata[nodename] = dict()
+        self.nodemetadata[nodename]['node_type'] = 'PID'
+        self.nodemetadata[nodename]['parent_id'] = parent_id
+        self.nodemetadata[nodename]['threads'] = processtreedict['threads']
+        self.nodemetadata[nodename]['environ'] = processtreedict['environ']
+        self.nodemetadata[nodename]['name'] = processtreedict['name']
+        self.nodemetadata[nodename]['module_path'] =\
+            processtreedict['module_path']
+        self.nodemetadata[nodename]['children'] = list()
+
+        if ppid_node not in self.nodemetadata:
+            self.nodemetadata[ppid_node] = dict()
+            self.nodemetadata[ppid_node]['children'] = list()
+
+        self.nodemetadata[ppid_node]['children'].append(nodename)
 
         for child in processtreedict['children']:
             self._add_processes_recursive(child)
