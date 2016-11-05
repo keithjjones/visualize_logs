@@ -94,6 +94,9 @@ class CuckooJSONReport(object):
         for process in self._processtree:
             self._add_processes_recursive(process)
 
+        # Add the rest of the metadata...
+        self._add_process_metadata()
+
     def _add_processes_recursive(self, processtreedict):
         """
         Internal function to add processes recursively from
