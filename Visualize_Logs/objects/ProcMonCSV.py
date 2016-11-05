@@ -83,58 +83,58 @@ class ProcMonCSV(object):
         # Check existence of fields...
         if 'Date & Time' not in self.csvdata:
             raise Exceptions.VisualizeLogsMissingRequiredField(self.csvlogfile,
-                                                    'Date & Time')
+                                                               'Date & Time')
         if 'Time of Day' not in self.csvdata:
             raise Exceptions.VisualizeLogsMissingRequiredField(self.csvlogfile,
-                                                    'Time of Day')
+                                                               'Time of Day')
         if 'Process Name' not in self.csvdata:
             raise Exceptions.VisualizeLogsMissingRequiredField(self.csvlogfile,
-                                                    'Process Name')
+                                                               'Process Name')
         if 'PID' not in self.csvdata:
             raise Exceptions.VisualizeLogsMissingRequiredField(self.csvlogfile,
-                                                    'PID')
+                                                               'PID')
         if 'Operation' not in self.csvdata:
             raise Exceptions.VisualizeLogsMissingRequiredField(self.csvlogfile,
-                                                    'Operation')
+                                                               'Operation')
         if 'Path' not in self.csvdata:
             raise Exceptions.VisualizeLogsMissingRequiredField(self.csvlogfile,
-                                                    'Path')
+                                                               'Path')
         if 'Result' not in self.csvdata:
             raise Exceptions.VisualizeLogsMissingRequiredField(self.csvlogfile,
-                                                    'Result')
+                                                               'Result')
         if 'Detail' not in self.csvdata:
             raise Exceptions.VisualizeLogsMissingRequiredField(self.csvlogfile,
-                                                    'Detail')
+                                                               'Detail')
         if 'TID' not in self.csvdata:
             raise Exceptions.VisualizeLogsMissingRequiredField(self.csvlogfile,
-                                                    'TID')
+                                                               'TID')
         if 'Duration' not in self.csvdata:
             raise Exceptions.VisualizeLogsMissingRequiredField(self.csvlogfile,
-                                                    'Duration')
+                                                               'Duration')
         if 'Image Path' not in self.csvdata:
             raise Exceptions.VisualizeLogsMissingRequiredField(self.csvlogfile,
-                                                    'Image Path')
+                                                               'Image Path')
         if 'Command Line' not in self.csvdata:
             raise Exceptions.VisualizeLogsMissingRequiredField(self.csvlogfile,
-                                                    'Command Line')
+                                                               'Command Line')
         if 'Parent PID' not in self.csvdata:
             raise Exceptions.VisualizeLogsMissingRequiredField(self.csvlogfile,
-                                                    'Parent PID')
+                                                               'Parent PID')
         if 'Event Class' not in self.csvdata:
             raise Exceptions.VisualizeLogsMissingRequiredField(self.csvlogfile,
-                                                    'Event Class')
+                                                               'Event Class')
         if 'User' not in self.csvdata:
             raise Exceptions.VisualizeLogsMissingRequiredField(self.csvlogfile,
-                                                    'User')
+                                                               'User')
         if 'Session' not in self.csvdata:
             raise Exceptions.VisualizeLogsMissingRequiredField(self.csvlogfile,
-                                                    'Session')
+                                                               'Session')
         if 'Category' not in self.csvdata:
             raise Exceptions.VisualizeLogsMissingRequiredField(self.csvlogfile,
-                                                    'Category')
+                                                               'Category')
         if 'Architecture' not in self.csvdata:
             raise Exceptions.VisualizeLogsMissingRequiredField(self.csvlogfile,
-                                                    'Architecture')
+                                                               'Architecture')
 
         # Convert Date and Time...
         if 'Date & Time' in self.csvdata:
