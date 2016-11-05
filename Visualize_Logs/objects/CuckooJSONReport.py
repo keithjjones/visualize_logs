@@ -100,7 +100,7 @@ class CuckooJSONReport(object):
         a dict representing the JSON process tree.
 
         :param processtreedict:  A dict of data from the process tree.
-        :returns: Nothin.
+        :returns: Nothing.
         """
         nodename = "PID {0}".format(processtreedict['pid'])
         parent_id = "{0}".format(processtreedict['parent_id'])
@@ -128,6 +128,18 @@ class CuckooJSONReport(object):
 
         for child in processtreedict['children']:
             self._add_processes_recursive(child)
+
+    def _add_process_metadata(self):
+        """
+        Internal function that ties the extra process metadata
+        to the nodemetadata dict.
+
+        :returns: Nothing.
+        """
+        for process in self._processes:
+            nodename = "PID {0}".format(process['process_id'])
+            self.nodemetadata[nodename]['first_seen'] = process['first_seen']
+            self.nodemetadata[nodename]['calls'] = process['calls']
 
     def _create_positions_digraph(self):
         """
