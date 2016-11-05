@@ -94,7 +94,10 @@ class CuckooJSONReport(object):
         :param processtreedict:  A dict of data from the process tree.
         :returns: Nothin.
         """
-        self.digraph.add_node("{0}".format(processtreedict['pid']))
+        self.digraph.add_node("PID {0}".format(processtreedict['pid']),
+                              type='PID',
+                              parent_id="{0}"
+                              .format(processtreedict['parent_id']))
 
         for child in processtreedict['children']:
             self._add_processes_recursive(child)
