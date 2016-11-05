@@ -8,6 +8,9 @@ import networkx
 # OS
 import os
 
+# Pandas
+import pandas
+
 # Plotly
 from plotly.offline import plot
 from plotly.graph_objs import Bar, Scatter, Figure, Layout, \
@@ -79,6 +82,9 @@ class CuckooJSONReport(object):
         # Create a network graph...
         self.digraph = networkx.DiGraph()
 
+        # Add all the processes to the graph...
+        self._add_all_processes()
+
     def _add_all_processes(self):
         """
         Internal function to add processess from JSON report
@@ -107,7 +113,7 @@ class CuckooJSONReport(object):
         """
         nodename = "PID {0}".format(processtreedict['pid'])
         parent_id = "{0}".format(processtreedict['parent_id'])
-        ppid_node = "PID {0}".format(processtreedict['parent_id'])
+        ppid_node = "PID "+parent_id
 
         self.digraph.add_node(nodename,
                               type='PID',
@@ -142,7 +148,8 @@ class CuckooJSONReport(object):
         for process in self._processes:
             nodename = "PID {0}".format(process['process_id'])
             self.nodemetadata[nodename]['first_seen'] = process['first_seen']
-            self.nodemetadata[nodename]['calls'] = process['calls']
+            self.nodemetadata[nodename]['calls'] =\
+                pandas.DataFrame(process['calls'])
 
     def _create_positions_digraph(self):
         """
