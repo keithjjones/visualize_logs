@@ -5,9 +5,6 @@
 # NetworkX
 import networkx
 
-# Pandas
-import pandas
-
 # OS
 import os
 
