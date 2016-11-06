@@ -85,6 +85,9 @@ class CuckooJSONReport(object):
         # Add all the processes to the graph...
         self._add_all_processes()
 
+        # Add network activity to the graph...
+        self._add_network_activity()
+
     def _add_all_processes(self):
         """
         Internal function to add processess from JSON report
@@ -134,6 +137,7 @@ class CuckooJSONReport(object):
 
         if ppid_node not in self.nodemetadata:
             self.nodemetadata[ppid_node] = dict()
+            self.nodemetadata[ppid_node]['node_type'] = 'PID'
             self.nodemetadata[ppid_node]['children'] = list()
             self.nodemetadata[ppid_node]['cmdline'] = ""
 
@@ -178,6 +182,39 @@ class CuckooJSONReport(object):
                     childnode = "PID {0}".format(childpid)
                     self.nodemetadata[childnode]['cmdline'] = cmdline
 
+    def _add_network_activity(self):
+        """
+        Internal function that adds network data to the graph.
+        Assumes processes have already been plotted.
+
+        :returns:  Nothin.
+        """
+        metadata = self.nodemetadata.copy()
+        for node in metadata:
+            if metadata[node]['node_type'] == 'PID':
+                if 'calls' in metadata[node]:
+                    calls = metadata[node]['calls']
+                    dnslookups = calls[calls['api'] == 'gethostbyname']
+
+                    hostname = None
+
+                    for i, lookup in dnslookups.iterrows():
+                        for arg in lookup['arguments']:
+                            if arg['name'] == 'Name':
+                                hostname = arg['value']
+                                break
+
+                        if hostname is not None:
+                            hostnodename = "HOST {0}".format(hostname)
+                            if hostnodename not in self.nodemetadata:
+                                self.nodemetadata[hostnodename] = dict()
+                                self.nodemetadata[hostnodename]['node_type'] =\
+                                    'dns'
+                                self.nodemetadata[hostnodename]['host'] =\
+                                    hostname
+                                self.digraph.add_node(hostnodename, type='DNS')
+                            self.digraph.add_edge(node, hostnodename)
+
     def _create_positions_digraph(self):
         """
         Internal function to create the positions of the graph.
@@ -209,14 +246,20 @@ class CuckooJSONReport(object):
         # Node coordinates...
         ProcessX = []
         ProcessY = []
+        DNSX = []
+        DNSY = []
 
         # Edge coordinates...
         ProcessXe = []
         ProcessYe = []
+        DNSXe = []
+        DNSYe = []
 
         # Hover Text...
         proctxt = []
+        dnstxt = []
 
+        # Traverse nodes...
         for node in self.digraph:
             if self.digraph.node[node]['type'] == 'PID':
                 ProcessX.append(self.pos[node][0])
@@ -237,6 +280,17 @@ class CuckooJSONReport(object):
                         self.nodemetadata[node]['parent_id']
                         )
                                )
+            if self.digraph.node[node]['type'] == 'DNS':
+                DNSX.append(self.pos[node][0])
+                DNSY.append(self.pos[node][1])
+                dnstxt.append(
+                    "DNS: {0}"
+                    .format(
+                        self.nodemetadata[node]['host'],
+                        )
+                               )
+
+        # Traverse edges...
         for edge in self.digraph.edges():
             if (self.digraph.node[edge[0]]['type'] == 'PID' and
                     self.digraph.node[edge[1]]['type'] == 'PID'):
@@ -246,6 +300,14 @@ class CuckooJSONReport(object):
                 ProcessYe.append(self.pos[edge[0]][1])
                 ProcessYe.append(self.pos[edge[1]][1])
                 ProcessYe.append(None)
+            if (self.digraph.node[edge[0]]['type'] == 'PID' and
+                    self.digraph.node[edge[1]]['type'] == 'DNS'):
+                DNSXe.append(self.pos[edge[0]][0])
+                DNSXe.append(self.pos[edge[1]][0])
+                DNSXe.append(None)
+                DNSYe.append(self.pos[edge[0]][1])
+                DNSYe.append(self.pos[edge[1]][1])
+                DNSYe.append(None)
 
         nodes = []
         edges = []
@@ -274,6 +336,30 @@ class CuckooJSONReport(object):
         nodes.append(ProcNodes)
         edges.append(ProcEdges)
 
+        # DNS...
+
+        marker = Marker(symbol='diamond', size=7)
+
+        # Create the nodes...
+        DNSNodes = Scatter(x=DNSX,
+                           y=DNSY,
+                           mode='markers',
+                           marker=marker,
+                           name='Host',
+                           text=dnstxt,
+                           hoverinfo='text')
+
+        # Create the edges for the nodes...
+        DNSEdges = Scatter(x=DNSXe,
+                           y=DNSYe,
+                           mode='lines',
+                           line=Line(shape='linear'),
+                           name='DNS Lookup',
+                           hoverinfo='none')
+
+        nodes.append(DNSNodes)
+        edges.append(DNSEdges)
+
         # Reverse the order and mush...
         output = []
         output += edges[::-1]
@@ -297,6 +383,21 @@ class CuckooJSONReport(object):
                         text="{0}<br>PID: {1}".format(
                             self.nodemetadata[node]['name'],
                             self.nodemetadata[node]['pid']
+                            ),
+                        x=self.pos[node][0],
+                        y=self.pos[node][1],
+                        xref='x',
+                        yref='y',
+                        showarrow=True,
+                        ax=-40,
+                        ay=-40
+                        )
+                    )
+            if self.digraph.node[node]['type'] == 'DNS':
+                annotations.append(
+                    Annotation(
+                        text="{0}".format(
+                            self.nodemetadata[node]['host']
                             ),
                         x=self.pos[node][0],
                         y=self.pos[node][1],
