@@ -194,26 +194,38 @@ class CuckooJSONReport(object):
             if metadata[node]['node_type'] == 'PID':
                 if 'calls' in metadata[node]:
                     calls = metadata[node]['calls']
-                    dnslookups = calls[calls['api'] == 'gethostbyname']
 
-                    hostname = None
+                    # Get DNS lookups...
+                    self._add_dns_lookups(node, calls)
 
-                    for i, lookup in dnslookups.iterrows():
-                        for arg in lookup['arguments']:
-                            if arg['name'] == 'Name':
-                                hostname = arg['value']
-                                break
+    def _add_dns_lookups(self, node, calls):
+        """
+        Internal function to add DNS lookups to the graph.
 
-                        if hostname is not None:
-                            hostnodename = "HOST {0}".format(hostname)
-                            if hostnodename not in self.nodemetadata:
-                                self.nodemetadata[hostnodename] = dict()
-                                self.nodemetadata[hostnodename]['node_type'] =\
-                                    'dns'
-                                self.nodemetadata[hostnodename]['host'] =\
-                                    hostname
-                                self.digraph.add_node(hostnodename, type='DNS')
-                            self.digraph.add_edge(node, hostnodename)
+        :param node: The node name for the calls.
+        :param calls:  A pandas.DataFrame of process calls.
+        :returns:  Nothing.
+        """
+        dnslookups = calls[calls['api'] == 'gethostbyname']
+
+        hostname = None
+
+        for i, lookup in dnslookups.iterrows():
+            for arg in lookup['arguments']:
+                if arg['name'] == 'Name':
+                    hostname = arg['value']
+                    break
+
+            if hostname is not None:
+                hostnodename = "HOST {0}".format(hostname)
+                if hostnodename not in self.nodemetadata:
+                    self.nodemetadata[hostnodename] = dict()
+                    self.nodemetadata[hostnodename]['node_type'] =\
+                        'dns'
+                    self.nodemetadata[hostnodename]['host'] =\
+                        hostname
+                    self.digraph.add_node(hostnodename, type='DNS')
+                self.digraph.add_edge(node, hostnodename)
 
     def _create_positions_digraph(self):
         """
