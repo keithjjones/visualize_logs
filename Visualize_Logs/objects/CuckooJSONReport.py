@@ -189,6 +189,8 @@ class CuckooJSONReport(object):
 
         :returns:  Nothin.
         """
+        self.domains =\
+            pandas.DataFrame(self.jsonreportdata['network']['domains'])
         metadata = self.nodemetadata.copy()
         for node in metadata:
             if metadata[node]['node_type'] == 'PID':
@@ -220,6 +222,12 @@ class CuckooJSONReport(object):
                 hostnodename = self._add_host(hostname)
                 self.digraph.add_edge(node, hostnodename)
 
+                ips = self.domains[self.domains['domain'] == hostname]
+
+                for j, ip in ips.iterrows():
+                    ipnodename = self._add_ip(ip['ip'])
+                    self.digraph.add_edge(hostnodename, ipnodename)
+
     def _add_host(self, host):
         """
         Internal function to add a host if it does not exist.
@@ -230,11 +238,27 @@ class CuckooJSONReport(object):
         hostnodename = "HOST {0}".format(host)
         if hostnodename not in self.nodemetadata:
             self.nodemetadata[hostnodename] = dict()
-            self.nodemetadata[hostnodename]['node_type'] = 'host'
+            self.nodemetadata[hostnodename]['node_type'] = 'IP'
             self.nodemetadata[hostnodename]['host'] = host
             self.digraph.add_node(hostnodename, type='HOST')
 
         return hostnodename
+
+    def _add_ip(self, ip):
+        """
+        Internal function to add a host if it does not exist.
+
+        :param ip: IP address.
+        :returns: Node name for the IP address.
+        """
+        ipnodename = "IP {0}".format(ip)
+        if ipnodename not in self.nodemetadata:
+            self.nodemetadata[ipnodename] = dict()
+            self.nodemetadata[ipnodename]['node_type'] = 'IP'
+            self.nodemetadata[ipnodename]['ip'] = ip
+            self.digraph.add_node(ipnodename, type='IP')
+
+        return ipnodename
 
     def _create_positions_digraph(self):
         """
@@ -267,18 +291,23 @@ class CuckooJSONReport(object):
         # Node coordinates...
         ProcessX = []
         ProcessY = []
-        DNSX = []
-        DNSY = []
+        HostX = []
+        HostY = []
+        IPX = []
+        IPY = []
 
         # Edge coordinates...
         ProcessXe = []
         ProcessYe = []
+        GetNameXe = []
+        GetNameYe = []
         DNSXe = []
         DNSYe = []
 
         # Hover Text...
         proctxt = []
-        dnstxt = []
+        hosttxt = []
+        iptxt = []
 
         # Traverse nodes...
         for node in self.digraph:
@@ -302,12 +331,21 @@ class CuckooJSONReport(object):
                         )
                                )
             if self.digraph.node[node]['type'] == 'HOST':
-                DNSX.append(self.pos[node][0])
-                DNSY.append(self.pos[node][1])
-                dnstxt.append(
+                HostX.append(self.pos[node][0])
+                HostY.append(self.pos[node][1])
+                hosttxt.append(
                     "HOST: {0}"
                     .format(
                         self.nodemetadata[node]['host'],
+                        )
+                               )
+            if self.digraph.node[node]['type'] == 'IP':
+                IPX.append(self.pos[node][0])
+                IPY.append(self.pos[node][1])
+                iptxt.append(
+                    "IP: {0}"
+                    .format(
+                        self.nodemetadata[node]['ip'],
                         )
                                )
 
@@ -323,6 +361,14 @@ class CuckooJSONReport(object):
                 ProcessYe.append(None)
             if (self.digraph.node[edge[0]]['type'] == 'PID' and
                     self.digraph.node[edge[1]]['type'] == 'HOST'):
+                GetNameXe.append(self.pos[edge[0]][0])
+                GetNameXe.append(self.pos[edge[1]][0])
+                GetNameXe.append(None)
+                GetNameYe.append(self.pos[edge[0]][1])
+                GetNameYe.append(self.pos[edge[1]][1])
+                GetNameYe.append(None)
+            if (self.digraph.node[edge[0]]['type'] == 'HOST' and
+                    self.digraph.node[edge[1]]['type'] == 'IP'):
                 DNSXe.append(self.pos[edge[0]][0])
                 DNSXe.append(self.pos[edge[1]][0])
                 DNSXe.append(None)
@@ -357,28 +403,52 @@ class CuckooJSONReport(object):
         nodes.append(ProcNodes)
         edges.append(ProcEdges)
 
-        # DNS...
+        # HOSTS...
 
         marker = Marker(symbol='diamond', size=7)
 
         # Create the nodes...
-        DNSNodes = Scatter(x=DNSX,
-                           y=DNSY,
-                           mode='markers',
-                           marker=marker,
-                           name='Host',
-                           text=dnstxt,
-                           hoverinfo='text')
+        HostNodes = Scatter(x=HostX,
+                            y=HostY,
+                            mode='markers',
+                            marker=marker,
+                            name='Host',
+                            text=hosttxt,
+                            hoverinfo='text')
+
+        # Create the edges for the nodes...
+        GetNameEdges = Scatter(x=GetNameXe,
+                               y=GetNameYe,
+                               mode='lines',
+                               line=Line(shape='linear'),
+                               name='DNS Query',
+                               hoverinfo='none')
+
+        nodes.append(HostNodes)
+        edges.append(GetNameEdges)
+
+        # IPS...
+
+        marker = Marker(symbol='diamond', size=7)
+
+        # Create the nodes...
+        IPNodes = Scatter(x=IPX,
+                          y=IPY,
+                          mode='markers',
+                          marker=marker,
+                          name='IP',
+                          text=iptxt,
+                          hoverinfo='text')
 
         # Create the edges for the nodes...
         DNSEdges = Scatter(x=DNSXe,
                            y=DNSYe,
                            mode='lines',
                            line=Line(shape='linear'),
-                           name='DNS Lookup',
+                           name='DNS Response',
                            hoverinfo='none')
 
-        nodes.append(DNSNodes)
+        nodes.append(IPNodes)
         edges.append(DNSEdges)
 
         # Reverse the order and mush...
@@ -419,6 +489,21 @@ class CuckooJSONReport(object):
                     Annotation(
                         text="HOST: {0}".format(
                             self.nodemetadata[node]['host']
+                            ),
+                        x=self.pos[node][0],
+                        y=self.pos[node][1],
+                        xref='x',
+                        yref='y',
+                        showarrow=True,
+                        ax=-40,
+                        ay=-40
+                        )
+                    )
+            if self.digraph.node[node]['type'] == 'IP':
+                annotations.append(
+                    Annotation(
+                        text="IP: {0}".format(
+                            self.nodemetadata[node]['ip']
                             ),
                         x=self.pos[node][0],
                         y=self.pos[node][1],
