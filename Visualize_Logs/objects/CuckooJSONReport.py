@@ -615,7 +615,7 @@ class CuckooJSONReport(object):
         return annotations
 
     def plotgraph(self,
-                  graphvizprog='dot',
+                  graphvizprog='sfdp',
                   filename='temp-plot.html',
                   title=None, auto_open=True,
                   image=None, image_filename='plot_image',
