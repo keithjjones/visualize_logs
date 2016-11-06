@@ -217,15 +217,24 @@ class CuckooJSONReport(object):
                     break
 
             if hostname is not None:
-                hostnodename = "HOST {0}".format(hostname)
-                if hostnodename not in self.nodemetadata:
-                    self.nodemetadata[hostnodename] = dict()
-                    self.nodemetadata[hostnodename]['node_type'] =\
-                        'dns'
-                    self.nodemetadata[hostnodename]['host'] =\
-                        hostname
-                    self.digraph.add_node(hostnodename, type='DNS')
+                hostnodename = self._add_host(hostname)
                 self.digraph.add_edge(node, hostnodename)
+
+    def _add_host(self, host):
+        """
+        Internal function to add a host if it does not exist.
+
+        :param host: Host name.
+        :returns: Node name for the host.
+        """
+        hostnodename = "HOST {0}".format(host)
+        if hostnodename not in self.nodemetadata:
+            self.nodemetadata[hostnodename] = dict()
+            self.nodemetadata[hostnodename]['node_type'] = 'host'
+            self.nodemetadata[hostnodename]['host'] = host
+            self.digraph.add_node(hostnodename, type='HOST')
+
+        return hostnodename
 
     def _create_positions_digraph(self):
         """
@@ -292,11 +301,11 @@ class CuckooJSONReport(object):
                         self.nodemetadata[node]['parent_id']
                         )
                                )
-            if self.digraph.node[node]['type'] == 'DNS':
+            if self.digraph.node[node]['type'] == 'HOST':
                 DNSX.append(self.pos[node][0])
                 DNSY.append(self.pos[node][1])
                 dnstxt.append(
-                    "DNS: {0}"
+                    "HOST: {0}"
                     .format(
                         self.nodemetadata[node]['host'],
                         )
@@ -313,7 +322,7 @@ class CuckooJSONReport(object):
                 ProcessYe.append(self.pos[edge[1]][1])
                 ProcessYe.append(None)
             if (self.digraph.node[edge[0]]['type'] == 'PID' and
-                    self.digraph.node[edge[1]]['type'] == 'DNS'):
+                    self.digraph.node[edge[1]]['type'] == 'HOST'):
                 DNSXe.append(self.pos[edge[0]][0])
                 DNSXe.append(self.pos[edge[1]][0])
                 DNSXe.append(None)
@@ -405,10 +414,10 @@ class CuckooJSONReport(object):
                         ay=-40
                         )
                     )
-            if self.digraph.node[node]['type'] == 'DNS':
+            if self.digraph.node[node]['type'] == 'HOST':
                 annotations.append(
                     Annotation(
-                        text="{0}".format(
+                        text="HOST: {0}".format(
                             self.nodemetadata[node]['host']
                             ),
                         x=self.pos[node][0],
