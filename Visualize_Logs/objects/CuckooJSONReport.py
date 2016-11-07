@@ -1185,7 +1185,8 @@ class CuckooJSONReport(object):
         ProcEdges = Scatter(x=ProcessXe,
                             y=ProcessYe,
                             mode='lines',
-                            line=Line(shape='linear'),
+                            line=Line(shape='linear',
+                                      color='rgb(214,39,20)'),
                             name='Process Start',
                             hoverinfo='none')
 
@@ -1211,7 +1212,8 @@ class CuckooJSONReport(object):
         GetNameEdges = Scatter(x=GetNameXe,
                                y=GetNameYe,
                                mode='lines',
-                               line=Line(shape='linear'),
+                               line=Line(shape='linear',
+                                         color='rgb(23,190,207)'),
                                name='DNS Query',
                                hoverinfo='none')
 
@@ -1236,7 +1238,8 @@ class CuckooJSONReport(object):
         DNSEdges = Scatter(x=DNSXe,
                            y=DNSYe,
                            mode='lines',
-                           line=Line(shape='linear'),
+                           line=Line(shape='linear',
+                                     color='rgb(23,190,207)'),
                            name='DNS Response',
                            hoverinfo='none')
 
@@ -1259,7 +1262,8 @@ class CuckooJSONReport(object):
         SocketEdges = Scatter(x=SocketXe,
                               y=SocketYe,
                               mode='lines',
-                              line=Line(shape='linear'),
+                              line=Line(shape='linear',
+                                        color='rgb(227,119,194)'),
                               name='Create Socket',
                               hoverinfo='none')
 
@@ -1283,7 +1287,8 @@ class CuckooJSONReport(object):
         TCPConnectEdges = Scatter(x=TCPConnectXe,
                                   y=TCPConnectYe,
                                   mode='lines',
-                                  line=Line(shape='linear'),
+                                  line=Line(shape='linear',
+                                            color='rgb(31,119,180)'),
                                   name='TCP Connect',
                                   hoverinfo='none')
 
@@ -1322,7 +1327,8 @@ class CuckooJSONReport(object):
         FileCreateEdges = Scatter(x=FileCreateXe,
                                   y=FileCreateYe,
                                   mode='lines',
-                                  line=Line(shape='linear'),
+                                  line=Line(shape='linear',
+                                            color='rgb(177,3,24)'),
                                   name='File Create',
                                   hoverinfo='none')
 
@@ -1343,7 +1349,8 @@ class CuckooJSONReport(object):
         FileWriteEdges = Scatter(x=FileWriteXe,
                                  y=FileWriteYe,
                                  mode='lines',
-                                 line=Line(shape='linear'),
+                                 line=Line(shape='linear',
+                                           color='rgb(95,158,209)'),
                                  name='File Write',
                                  hoverinfo='none')
 
@@ -1364,7 +1371,8 @@ class CuckooJSONReport(object):
         FileCopyEdges = Scatter(x=FileCopyXe,
                                 y=FileCopyYe,
                                 mode='lines',
-                                line=Line(shape='linear'),
+                                line=Line(shape='linear',
+                                          color='rgb(255,188,121)'),
                                 name='File Copy',
                                 hoverinfo='none')
 
@@ -1385,7 +1393,8 @@ class CuckooJSONReport(object):
         FileDeleteEdges = Scatter(x=FileDeleteXe,
                                   y=FileDeleteYe,
                                   mode='lines',
-                                  line=Line(shape='linear'),
+                                  line=Line(shape='linear',
+                                            color='rgb(219,161,58)'),
                                   name='File Delete',
                                   hoverinfo='none')
 
@@ -1406,7 +1415,8 @@ class CuckooJSONReport(object):
         FileMoveEdges = Scatter(x=FileMoveXe,
                                 y=FileMoveYe,
                                 mode='lines',
-                                line=Line(shape='linear'),
+                                line=Line(shape='linear',
+                                          color='rgb(171,171,171)'),
                                 name='File Move',
                                 hoverinfo='none')
 
@@ -1429,7 +1439,8 @@ class CuckooJSONReport(object):
         FileReadEdges = Scatter(x=FileReadXe,
                                 y=FileReadYe,
                                 mode='lines',
-                                line=Line(shape='linear'),
+                                line=Line(shape='linear',
+                                          color='rgb(200,82,0)'),
                                 name='File Read',
                                 hoverinfo='none')
 
