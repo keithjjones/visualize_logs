@@ -123,6 +123,10 @@ class CuckooJSONReport(object):
             # Add network activity to the graph...
             self._add_network_activity()
 
+        if plotfiles is True:
+            # Add file activity to the graph...
+            self._add_file_activity()
+
     def _add_all_processes(self):
         """
         Internal function to add processess from JSON report
@@ -218,6 +222,71 @@ class CuckooJSONReport(object):
                     childnode = "PID {0}".format(childpid)
                     self.nodemetadata[childnode]['cmdline'] = cmdline
 
+    def _add_file_activity(self):
+        """
+        Internal function that adds file data to the graph.
+        Assumes processes have already been plotted.
+
+        :returns:  Nothing.
+        """
+        metadata = self.nodemetadata.copy()
+        for node in metadata:
+            if metadata[node]['node_type'] == 'PID':
+                if 'calls' in metadata[node]:
+                    calls = metadata[node]['calls']
+
+                    # Get file creates...
+                    self._add_file_creates(node, calls)
+
+    def _add_file_creates(self, node, calls):
+        """
+        Internal function that adds the file creates in the calls
+        for the PID node.
+
+        :param node: PID node name
+        :param calls:  Calls for node.
+        :returns: Nothing.
+        """
+        filecreates = calls[(calls['api'] == 'NtCreateFile') &
+                            (calls['status'] == True)]
+
+        for i, filecreate in filecreates.iterrows():
+            filename = None
+            existedbefore = None
+            desiredaccess = None
+            createdisposition = None
+            fileattribtes = None
+            for arg in filecreate['arguments']:
+                if arg['name'] == 'FileName':
+                    filename = arg['value']
+                if arg['name'] == 'ExistedBefore':
+                    existedbefore = arg['value']
+                if arg['name'] == 'DesiredAccess':
+                    desiredaccess = arg['value']
+                if arg['name'] == 'CreateDisposition':
+                    createdisposition = arg['value']
+                if arg['name'] == 'FileAttributes':
+                    fileattribtes = arg['value']
+            if filename is not None:
+                filenodename = self._add_file(filename)
+                # Get a sequential number for the event...
+                nextid = len(self.nodemetadata)
+                fcnodename = "FILE CREATE {0}".format(nextid)
+                self.nodemetadata[fcnodename] = dict()
+                self.nodemetadata[fcnodename]['file'] = filename
+                self.nodemetadata[fcnodename]['existedbefore'] = existedbefore
+                self.nodemetadata[fcnodename]['desiredaccess'] = desiredaccess
+                self.nodemetadata[fcnodename]['createdisposition'] =\
+                    createdisposition
+                self.nodemetadata[fcnodename]['fileattribtes'] =\
+                    fileattribtes
+                self.nodemetadata[fcnodename]['timestamp'] =\
+                    filecreate['timestamp']
+                self.digraph.add_node(fcnodename, type='FILECREATE')
+
+                self.digraph.add_edge(node, fcnodename)
+                self.digraph.add_edge(fcnodename, filenodename)
+
     def _add_network_activity(self):
         """
         Internal function that adds network data to the graph.
@@ -284,12 +353,12 @@ class CuckooJSONReport(object):
 
     def _add_ip(self, ip):
         """
-        Internal function to add a host if it does not exist.
+        Internal function to add an IP if it does not exist.
 
         :param ip: IP address.
         :returns: Node name for the IP address.
         """
-        ipnodename = "IP {0}".format(ip)
+        ipnodename = '"IP {0}"'.format(ip)
         if ipnodename not in self.nodemetadata:
             self.nodemetadata[ipnodename] = dict()
             self.nodemetadata[ipnodename]['node_type'] = 'IP'
@@ -297,6 +366,22 @@ class CuckooJSONReport(object):
             self.digraph.add_node(ipnodename, type='IP')
 
         return ipnodename
+
+    def _add_file(self, filename):
+        """
+        Internal function to add a file if it does not exist.
+
+        :param ip: File path.
+        :returns: Node name for the file.
+        """
+        filenodename = '"FILE {0}"'.format(filename)
+        if filenodename not in self.nodemetadata:
+            self.nodemetadata[filenodename] = dict()
+            self.nodemetadata[filenodename]['node_type'] = 'FILE'
+            self.nodemetadata[filenodename]['file'] = filename
+            self.digraph.add_node(filenodename, type='FILE')
+
+        return filenodename
 
     def _add_sockets(self, node, calls):
         """
@@ -446,6 +531,10 @@ class CuckooJSONReport(object):
         SocketY = []
         TCPConnectX = []
         TCPConnectY = []
+        FileX = []
+        FileY = []
+        FileCreateX = []
+        FileCreateY = []
 
         # Edge coordinates...
         ProcessXe = []
@@ -458,6 +547,8 @@ class CuckooJSONReport(object):
         SocketYe = []
         TCPConnectXe = []
         TCPConnectYe = []
+        FileCreateXe = []
+        FileCreateYe = []
 
         # Hover Text...
         proctxt = []
@@ -465,6 +556,8 @@ class CuckooJSONReport(object):
         iptxt = []
         sockettxt = []
         tcpconnecttxt = []
+        filetxt = []
+        filecreatetxt = []
 
         # Traverse nodes...
         for node in self.digraph:
@@ -536,6 +629,34 @@ class CuckooJSONReport(object):
                         self.nodemetadata[node]['timestamp']
                         )
                                )
+            if self.digraph.node[node]['type'] == 'FILE':
+                FileX.append(self.pos[node][0])
+                FileY.append(self.pos[node][1])
+                filetxt.append(
+                    "File: {0}"
+                    .format(
+                        self.nodemetadata[node]['file']
+                        )
+                               )
+            if self.digraph.node[node]['type'] == 'FILECREATE':
+                FileCreateX.append(self.pos[node][0])
+                FileCreateY.append(self.pos[node][1])
+                filecreatetxt.append(
+                    "File Create: {0}<br>"
+                    "Existed Before: {1}<br>"
+                    "Desired Access: {2}<br>"
+                    "Create Disposition: {3}<br>"
+                    "File Atributes: {4}<br>"
+                    "Time: {5}"
+                    .format(
+                        self.nodemetadata[node]['file'],
+                        self.nodemetadata[node]['existedbefore'],
+                        self.nodemetadata[node]['desiredaccess'],
+                        self.nodemetadata[node]['createdisposition'],
+                        self.nodemetadata[node]['fileattribtes'],
+                        self.nodemetadata[node]['timestamp']
+                        )
+                               )
 
         # Traverse edges...
         for edge in self.digraph.edges():
@@ -581,6 +702,16 @@ class CuckooJSONReport(object):
                 TCPConnectYe.append(self.pos[edge[0]][1])
                 TCPConnectYe.append(self.pos[edge[1]][1])
                 TCPConnectYe.append(None)
+            if ((self.digraph.node[edge[0]]['type'] == 'PID' and
+                self.digraph.node[edge[1]]['type'] == 'FILECREATE') or
+                (self.digraph.node[edge[0]]['type'] == 'FILECREATE' and
+                    self.digraph.node[edge[1]]['type'] == 'FILE')):
+                FileCreateXe.append(self.pos[edge[0]][0])
+                FileCreateXe.append(self.pos[edge[1]][0])
+                FileCreateXe.append(None)
+                FileCreateYe.append(self.pos[edge[0]][1])
+                FileCreateYe.append(self.pos[edge[1]][1])
+                FileCreateYe.append(None)
 
         nodes = []
         edges = []
@@ -622,6 +753,8 @@ class CuckooJSONReport(object):
                             text=hosttxt,
                             hoverinfo='text')
 
+        nodes.append(HostNodes)
+
         # Create the edges for the nodes...
         GetNameEdges = Scatter(x=GetNameXe,
                                y=GetNameYe,
@@ -630,7 +763,6 @@ class CuckooJSONReport(object):
                                name='DNS Query',
                                hoverinfo='none')
 
-        nodes.append(HostNodes)
         edges.append(GetNameEdges)
 
         # IPS...
@@ -646,6 +778,8 @@ class CuckooJSONReport(object):
                           text=iptxt,
                           hoverinfo='text')
 
+        nodes.append(IPNodes)
+
         # Create the edges for the nodes...
         DNSEdges = Scatter(x=DNSXe,
                            y=DNSYe,
@@ -654,7 +788,6 @@ class CuckooJSONReport(object):
                            name='DNS Response',
                            hoverinfo='none')
 
-        nodes.append(IPNodes)
         edges.append(DNSEdges)
 
         # SOCKETS...
@@ -704,6 +837,44 @@ class CuckooJSONReport(object):
 
         nodes.append(TCPConnectNodes)
         edges.append(TCPConnectEdges)
+
+        # FILES...
+
+        marker = Marker(symbol='hexagon', size=10)
+
+        # Create the nodes...
+        FileNodes = Scatter(x=FileX,
+                            y=FileY,
+                            mode='markers',
+                            marker=marker,
+                            name='File',
+                            text=filetxt,
+                            hoverinfo='text')
+
+        nodes.append(FileNodes)
+
+        marker = Marker(symbol='triangle-down', size=7)
+
+        # Create the nodes...
+        FileCreateNodes = Scatter(x=FileCreateX,
+                                  y=FileCreateY,
+                                  mode='markers',
+                                  marker=marker,
+                                  name='File Create',
+                                  text=filecreatetxt,
+                                  hoverinfo='text')
+
+        nodes.append(FileCreateNodes)
+
+        # Create the edges for the nodes...
+        FileCreateEdges = Scatter(x=FileCreateXe,
+                                  y=FileCreateYe,
+                                  mode='lines',
+                                  line=Line(shape='linear'),
+                                  name='File Create',
+                                  hoverinfo='none')
+
+        edges.append(FileCreateEdges)
 
         # Reverse the order and mush...
         output = []
