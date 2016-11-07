@@ -15,7 +15,7 @@ setup(
     version='20161104.1',
     author='Keith J. Jones',
     author_email='keith@keithjjones.com',
-    packages=['Visualize_Logs'],
+    packages=['Visualize_Logs', 'Visualize_Logs.objects'],
     url='https://github.com/keithjjones/visualize_logs',
     license='CC BY-SA',
     description=('A Python library and command line tools to '
@@ -25,7 +25,8 @@ setup(
                       'pydotplus'],
     entry_points={
         'console_scripts': [
-            'plotprocmoncsv = Visualize_Logs.__main__:plotprocmoncsv'
+            'plotprocmoncsv = Visualize_Logs.__main__:plotprocmoncsv',
+            'plotcuckoojson = Visualize_Logs.__main__:plotcuckoojson'
         ]
      }
 )

@@ -7,8 +7,64 @@ import argparse
 # For paths
 import os
 # Required for plotting logs
-import Visualize_Logs.objects.ProcMonCSV as ProcMonCSV
-import Visualize_Logs.objects.CuckooJSONReport as CuckooJSONReport
+from Visualize_Logs.objects.ProcMonCSV \
+    import ProcMonCSV as ProcMonCSV
+from Visualize_Logs.objects.CuckooJSONReport \
+    import CuckooJSONReport as CuckooJSONReport
+
+
+#
+# Main function for plotcuckoojson
+#
+def plotcuckoojson():
+    #
+    # Command line args
+    #
+    parser = argparse.ArgumentParser(
+        description='Application to graph cuckoo-modified JSON reports')
+
+    parser.add_argument('CuckooJSONReportFile',
+                        help='cuckoo-modified JSON report file')
+
+    parser.add_argument('-f',
+                        '--file', metavar='HTMLFile',
+                        default='cuckoojson.html',
+                        help='Create the html report. Default name '
+                        'is cuckoojson.html')
+
+    parser.add_argument('-t',
+                        '--title',
+                        help='The title for the plot')
+
+    parser.add_argument('-na',
+                        '--nonetwork', action='store_true',
+                        help='Turn off network activity')
+
+    parser.add_argument('-fa',
+                        '--nofiles', action='store_true',
+                        help='Turn off file activity')
+
+    parser.add_argument('-ra',
+                        '--noregistry', action='store_true',
+                        help='Turn off registry activity')
+
+    # Parse command line arguments.
+    args = parser.parse_args()
+
+    jsonfile = args.CuckooJSONReportFile
+    filename = args.file
+
+    if not os.path.exists(jsonfile):
+        print('File does not exist: {0}'.format(jsonfile))
+        exit(1)
+
+    print('Reading log: {0}'.format(jsonfile))
+    cjr = CuckooJSONReport(jsonfile, plotnetwork=not(args.nonetwork),
+                           plotfiles=not(args.nofiles),
+                           plotregistry=not(args.noregistry))
+
+    print('Plotting log: {0}'.format(jsonfile))
+    cjr.plotgraph(filename=filename, title=args.title)
 
 
 #
@@ -29,7 +85,7 @@ def plotprocmoncsv():
     parser.add_argument('-f',
                         '--file', metavar='HTMLFile',
                         default='procmoncsv.html',
-                        help='Create the log file. Default name '
+                        help='Create the html report. Default name '
                         'is procmoncsv.html')
 
     parser.add_argument('-t',
