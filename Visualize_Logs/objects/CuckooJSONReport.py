@@ -95,6 +95,12 @@ class CuckooJSONReport(object):
     def __init__(self, jsonreportfile=None,
                  plotnetwork=True,
                  plotfiles=True,
+                 plotfilecreates=True,
+                 plotfiledeletes=True,
+                 plotfilemoves=True,
+                 plotfilecopies=True,
+                 plotfilewrites=True,
+                 plotfilereads=True,
                  plotregistry=True,
                  ignorepaths=None,
                  includepaths=None):
@@ -109,6 +115,12 @@ class CuckooJSONReport(object):
         :type jsonreportfile: A string.
         :param plotnetwork: Set to False to ignore network activity.
         :param plotfiles: Set to False to ignore file activity.
+        :param plotfilecreates: Set to False to ignore file creates.
+        :param plotfiledeletes: Set to False to ignore file deletes.
+        :param plotfilemoves: Set to False to ignore file moves.
+        :param plotfilecopies: Set to False to ignore file copies.
+        :param plotfilewrites: Set to False to ignore file writes.
+        :param plotfilereads: Set to False to ignore file reads.
         :param plotregistry: Set to False to ignore registry activity.
         :param ignorepaths: A list of regular expressions to ignore for
             files and registry values.
@@ -117,6 +129,13 @@ class CuckooJSONReport(object):
         :returns: An object.
         :rtype: CuckooJSONReport object.
         """
+        self.plotfilecreates = plotfilecreates
+        self.plotfiledeletes = plotfiledeletes
+        self.plotfilemoves = plotfilemoves
+        self.plotfilecopies = plotfilecopies
+        self.plotfilewrites = plotfilewrites
+        self.plotfilereads = plotfilereads
+
         if ignorepaths is not None and isinstance(ignorepaths, list):
             self.ignorepaths = ignorepaths
 
@@ -271,22 +290,28 @@ class CuckooJSONReport(object):
                     calls = metadata[node]['calls']
 
                     # Get file creates...
-                    self._add_file_creates(node, calls)
+                    if self.plotfilecreates is True:
+                        self._add_file_creates(node, calls)
 
                     # Get file writes...
-                    self._add_file_writes(node, calls)
+                    if self.plotfilewrites is True:
+                        self._add_file_writes(node, calls)
 
                     # Get file reads...
-                    self._add_file_reads(node, calls)
+                    if self.plotfilereads is True:
+                        self._add_file_reads(node, calls)
 
                     # Get file copies...
-                    self._add_file_copies(node, calls)
+                    if self.plotfilecopies is True:
+                        self._add_file_copies(node, calls)
 
                     # Get file deletes...
-                    self._add_file_deletes(node, calls)
+                    if self.plotfiledeletes is True:
+                        self._add_file_deletes(node, calls)
 
                     # Get file moves...
-                    self._add_file_moves(node, calls)
+                    if self.plotfilemoves is True:
+                        self._add_file_moves(node, calls)
 
                     # Connect PIDs to files
                     self._connect_file_to_pid()

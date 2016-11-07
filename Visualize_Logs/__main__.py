@@ -44,6 +44,30 @@ def plotcuckoojson():
                         '--nofiles', action='store_true',
                         help='Turn off file activity')
 
+    parser.add_argument('-fc',
+                        '--nofilecreates', action='store_true',
+                        help='Turn off file create activity')
+
+    parser.add_argument('-fm',
+                        '--nofilemoves', action='store_true',
+                        help='Turn off file move activity')
+
+    parser.add_argument('-fp',
+                        '--nofilecopies', action='store_true',
+                        help='Turn off file copy activity')
+
+    parser.add_argument('-fd',
+                        '--nofiledeletes', action='store_true',
+                        help='Turn off file delete activity')
+
+    parser.add_argument('-fw',
+                        '--nofilewrites', action='store_true',
+                        help='Turn off file write activity')
+
+    parser.add_argument('-fr',
+                        '--nofilereads', action='store_true',
+                        help='Turn off file read activity')
+
     parser.add_argument('-ra',
                         '--noregistry', action='store_true',
                         help='Turn off registry activity')
@@ -110,6 +134,12 @@ def plotcuckoojson():
     print('Reading log: {0}'.format(jsonfile))
     vl = CuckooJSONReport(jsonfile, plotnetwork=not(args.nonetwork),
                           plotfiles=not(args.nofiles),
+                          plotfilecreates=not(args.nofilecreates),
+                          plotfilemoves=not(args.nofilemoves),
+                          plotfiledeletes=not(args.nofiledeletes),
+                          plotfilecopies=not(args.nofilecopies),
+                          plotfilereads=not(args.nofilereads),
+                          plotfilewrites=not(args.nofilewrites),
                           plotregistry=not(args.noregistry),
                           ignorepaths=ignorepaths,
                           includepaths=includepaths)
