@@ -247,6 +247,9 @@ class CuckooJSONReport(object):
                     # Get file deletes...
                     self._add_file_deletes(node, calls)
 
+                    # Get file moves...
+                    self._add_file_moves(node, calls)
+
                     # Connect PIDs to files
                     self._connect_file_to_pid()
 
@@ -265,6 +268,48 @@ class CuckooJSONReport(object):
                         filepath = self.nodemetadata[linknode]['file']
                         if pidpath == filepath:
                             self.digraph.add_edge(linknode, node)
+
+    def _add_file_moves(self, node, calls):
+        """
+        Internal function that adds the file moves in the calls
+        for the PID node.
+
+        :param node: PID node name.
+        :param calls:  Calls for node.
+        :returns: Nothing.
+        """
+        filemoves = calls[((calls['api'] == 'MoveFileW') |
+                          (calls['api'] == 'MoveFileA') |
+                          (calls['api'] == 'MoveFileWithProgressW') |
+                          (calls['api'] == 'MoveFileWithProgressA')) &
+                          (calls['status'] == True)]
+
+        for i, filemove in filemoves.iterrows():
+            existingfilename = None
+            newfilename = None
+            for arg in filemove['arguments']:
+                if arg['name'] == 'ExistingFileName':
+                    existingfilename = arg['value']
+                if arg['name'] == 'NewFileName':
+                    newfilename = arg['value']
+            if newfilename is not None:
+                newfilenodename = self._add_file(newfilename)
+                existingfilenodename = self._add_file(existingfilename)
+                # Get a sequential number for the event...
+                nextid = len(self.nodemetadata)
+                fmnodename = "FILE MOVE {0}".format(nextid)
+                self.nodemetadata[fmnodename] = dict()
+                self.nodemetadata[fmnodename]['existingfile'] =\
+                    existingfilename
+                self.nodemetadata[fmnodename]['newfile'] = newfilename
+                self.nodemetadata[fmnodename]['node_type'] = 'FILEMOVE'
+                self.nodemetadata[fmnodename]['timestamp'] =\
+                    filemove['timestamp']
+                self.digraph.add_node(fmnodename, type='FILEMOVE')
+
+                self.digraph.add_edge(node, fmnodename)
+                self.digraph.add_edge(fmnodename, newfilenodename)
+                self.digraph.add_edge(fmnodename, existingfilenodename)
 
     def _add_file_copies(self, node, calls):
         """
@@ -680,6 +725,8 @@ class CuckooJSONReport(object):
         FileCopyY = []
         FileDeleteX = []
         FileDeleteY = []
+        FileMoveX = []
+        FileMoveY = []
 
         # Edge coordinates...
         ProcessXe = []
@@ -702,6 +749,8 @@ class CuckooJSONReport(object):
         FileCopyYe = []
         FileDeleteXe = []
         FileDeleteYe = []
+        FileMoveXe = []
+        FileMoveYe = []
 
         # Hover Text...
         proctxt = []
@@ -714,6 +763,7 @@ class CuckooJSONReport(object):
         filewritetxt = []
         filecopytxt = []
         filedeletetxt = []
+        filemovetxt = []
 
         # Traverse nodes...
         for node in self.digraph:
@@ -851,6 +901,20 @@ class CuckooJSONReport(object):
                         self.nodemetadata[node]['timestamp']
                         )
                                )
+            if self.digraph.node[node]['type'] == 'FILEMOVE':
+                FileMoveX.append(self.pos[node][0])
+                FileMoveY.append(self.pos[node][1])
+                filemovetxt.append(
+                    "File Move:<br>"
+                    "Existing File: {0}<br>"
+                    "New File: {1}<br>"
+                    "Time: {2}"
+                    .format(
+                        self.nodemetadata[node]['existingfile'],
+                        self.nodemetadata[node]['newfile'],
+                        self.nodemetadata[node]['timestamp']
+                        )
+                               )
 
         # Traverse edges...
         for edge in self.digraph.edges():
@@ -944,6 +1008,16 @@ class CuckooJSONReport(object):
                 FileDeleteYe.append(self.pos[edge[0]][1])
                 FileDeleteYe.append(self.pos[edge[1]][1])
                 FileDeleteYe.append(None)
+            if ((self.digraph.node[edge[0]]['type'] == 'PID' and
+                self.digraph.node[edge[1]]['type'] == 'FILEMOVE') or
+                (self.digraph.node[edge[0]]['type'] == 'FILEMOVE' and
+                    self.digraph.node[edge[1]]['type'] == 'FILE')):
+                FileMoveXe.append(self.pos[edge[0]][0])
+                FileMoveXe.append(self.pos[edge[1]][0])
+                FileMoveXe.append(None)
+                FileMoveYe.append(self.pos[edge[0]][1])
+                FileMoveYe.append(self.pos[edge[1]][1])
+                FileMoveYe.append(None)
 
         nodes = []
         edges = []
@@ -1170,6 +1244,27 @@ class CuckooJSONReport(object):
                                   hoverinfo='none')
 
         edges.append(FileDeleteEdges)
+
+        # Create the nodes...
+        FileMoveNodes = Scatter(x=FileMoveX,
+                                y=FileMoveY,
+                                mode='markers',
+                                marker=marker,
+                                name='File Move',
+                                text=filemovetxt,
+                                hoverinfo='text')
+
+        nodes.append(FileMoveNodes)
+
+        # Create the edges for the nodes...
+        FileMoveEdges = Scatter(x=FileMoveXe,
+                                y=FileMoveYe,
+                                mode='lines',
+                                line=Line(shape='linear'),
+                                name='File Move',
+                                hoverinfo='none')
+
+        edges.append(FileMoveEdges)
 
         # Create the edges for the nodes...
         LoadImageEdges = Scatter(x=LoadImageXe,
