@@ -68,7 +68,10 @@ class CuckooJSONReport(object):
     """Information available:
     http://lxr.free-electrons.com/source/include/uapi/linux/in.h"""
 
-    def __init__(self, jsonreportfile=None):
+    def __init__(self, jsonreportfile=None,
+                 plotnetwork=True,
+                 plotfiles=True,
+                 plotregistry=True):
         """
         The JSON report file is read and parsed using this class.  This
         could take a whiel depending on how big your JSON report is.
@@ -78,6 +81,9 @@ class CuckooJSONReport(object):
 
         :param jsonreportfile: The path to the JSON report file.
         :type jsonreportfile: A string.
+        :param plotnetwork: Set to False to ignore network activity.
+        :param plotfiles: Set to False to ignore file activity.
+        :param plotregistry: Set to False to ignore registry activity.
         :returns: An object.
         :rtype: CuckooJSONReport object.
         """
@@ -95,8 +101,9 @@ class CuckooJSONReport(object):
         # Add all the processes to the graph...
         self._add_all_processes()
 
-        # Add network activity to the graph...
-        self._add_network_activity()
+        if plotnetwork is True:
+            # Add network activity to the graph...
+            self._add_network_activity()
 
     def _add_all_processes(self):
         """
