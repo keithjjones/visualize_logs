@@ -593,7 +593,7 @@ class CuckooJSONReport(object):
 
         # HOSTS...
 
-        marker = Marker(symbol='diamond', size=7)
+        marker = Marker(symbol='square', size=10)
 
         # Create the nodes...
         HostNodes = Scatter(x=HostX,
@@ -617,7 +617,7 @@ class CuckooJSONReport(object):
 
         # IPS...
 
-        marker = Marker(symbol='diamond', size=7)
+        marker = Marker(symbol='square', size=10)
 
         # Create the nodes...
         IPNodes = Scatter(x=IPX,
