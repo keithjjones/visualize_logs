@@ -238,6 +238,25 @@ class CuckooJSONReport(object):
                     # Get file creates...
                     self._add_file_creates(node, calls)
 
+                    # Connect PIDs to files
+                    self._connect_file_to_pid()
+
+    def _connect_file_to_pid(self):
+        """
+        Internal function that will connect files to PIDs.
+
+        :returns:  Nothing.
+        """
+        for node in self.nodemetadata:
+            if (self.nodemetadata[node]['node_type'] == 'PID' and
+                    'module_path' in self.nodemetadata[node]):
+                pidpath = self.nodemetadata[node]['module_path']
+                for linknode in self.nodemetadata:
+                    if self.nodemetadata[linknode]['node_type'] == 'FILE':
+                        filepath = self.nodemetadata[linknode]['file']
+                        if pidpath == filepath:
+                            self.digraph.add_edge(linknode, node)
+
     def _add_file_creates(self, node, calls):
         """
         Internal function that adds the file creates in the calls
@@ -274,6 +293,7 @@ class CuckooJSONReport(object):
                 fcnodename = "FILE CREATE {0}".format(nextid)
                 self.nodemetadata[fcnodename] = dict()
                 self.nodemetadata[fcnodename]['file'] = filename
+                self.nodemetadata[fcnodename]['node_type'] = 'FILECREATE'
                 self.nodemetadata[fcnodename]['existedbefore'] = existedbefore
                 self.nodemetadata[fcnodename]['desiredaccess'] = desiredaccess
                 self.nodemetadata[fcnodename]['createdisposition'] =\
@@ -549,6 +569,8 @@ class CuckooJSONReport(object):
         TCPConnectYe = []
         FileCreateXe = []
         FileCreateYe = []
+        LoadImageXe = []
+        LoadImageYe = []
 
         # Hover Text...
         proctxt = []
@@ -712,6 +734,14 @@ class CuckooJSONReport(object):
                 FileCreateYe.append(self.pos[edge[0]][1])
                 FileCreateYe.append(self.pos[edge[1]][1])
                 FileCreateYe.append(None)
+            if (self.digraph.node[edge[0]]['type'] == 'FILE' and
+                    self.digraph.node[edge[1]]['type'] == 'PID'):
+                LoadImageXe.append(self.pos[edge[0]][0])
+                LoadImageXe.append(self.pos[edge[1]][0])
+                LoadImageXe.append(None)
+                LoadImageYe.append(self.pos[edge[0]][1])
+                LoadImageYe.append(self.pos[edge[1]][1])
+                LoadImageYe.append(None)
 
         nodes = []
         edges = []
@@ -875,6 +905,17 @@ class CuckooJSONReport(object):
                                   hoverinfo='none')
 
         edges.append(FileCreateEdges)
+
+        # Create the edges for the nodes...
+        LoadImageEdges = Scatter(x=LoadImageXe,
+                                 y=LoadImageYe,
+                                 mode='lines',
+                                 line=Line(shape='linear',
+                                           dash='dot'),
+                                 name='Process Load Image',
+                                 hoverinfo='none')
+
+        edges.append(LoadImageEdges)
 
         # Reverse the order and mush...
         output = []
