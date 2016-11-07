@@ -244,6 +244,9 @@ class CuckooJSONReport(object):
                     # Get file copies...
                     self._add_file_copies(node, calls)
 
+                    # Get file deletes...
+                    self._add_file_deletes(node, calls)
+
                     # Connect PIDs to files
                     self._connect_file_to_pid()
 
@@ -306,6 +309,40 @@ class CuckooJSONReport(object):
                 self.digraph.add_edge(node, fcnodename)
                 self.digraph.add_edge(fcnodename, newfilenodename)
                 self.digraph.add_edge(fcnodename, existingfilenodename)
+
+    def _add_file_deletes(self, node, calls):
+        """
+        Internal function that adds the file deletes in the calls
+        for the PID node.
+
+        :param node: PID node name.
+        :param calls:  Calls for node.
+        :returns: Nothing.
+        """
+        filedeletes = calls[((calls['api'] == 'DeleteFileW') |
+                             (calls['api'] == 'DeleteFileA')) &
+                            (calls['status'] == True)]
+
+        for i, filedelete in filedeletes.iterrows():
+            filename = None
+            for arg in filedelete['arguments']:
+                if arg['name'] == 'FileName':
+                    filename = arg['value']
+            if filename is not None:
+                filenodename = self._add_file(filename)
+                # Get a sequential number for the event...
+                nextid = len(self.nodemetadata)
+                fdnodename = "FILE DELETE {0}".format(nextid)
+                self.nodemetadata[fdnodename] = dict()
+                self.nodemetadata[fdnodename]['file'] =\
+                    filename
+                self.nodemetadata[fdnodename]['node_type'] = 'FILEDELETE'
+                self.nodemetadata[fdnodename]['timestamp'] =\
+                    filedelete['timestamp']
+                self.digraph.add_node(fdnodename, type='FILEDELETE')
+
+                self.digraph.add_edge(node, fdnodename)
+                self.digraph.add_edge(fdnodename, filenodename)
 
     def _add_file_creates(self, node, calls):
         """
@@ -641,6 +678,8 @@ class CuckooJSONReport(object):
         FileWriteY = []
         FileCopyX = []
         FileCopyY = []
+        FileDeleteX = []
+        FileDeleteY = []
 
         # Edge coordinates...
         ProcessXe = []
@@ -661,6 +700,8 @@ class CuckooJSONReport(object):
         FileWriteYe = []
         FileCopyXe = []
         FileCopyYe = []
+        FileDeleteXe = []
+        FileDeleteYe = []
 
         # Hover Text...
         proctxt = []
@@ -672,6 +713,7 @@ class CuckooJSONReport(object):
         filecreatetxt = []
         filewritetxt = []
         filecopytxt = []
+        filedeletetxt = []
 
         # Traverse nodes...
         for node in self.digraph:
@@ -798,6 +840,17 @@ class CuckooJSONReport(object):
                         self.nodemetadata[node]['timestamp']
                         )
                                )
+            if self.digraph.node[node]['type'] == 'FILEDELETE':
+                FileDeleteX.append(self.pos[node][0])
+                FileDeleteY.append(self.pos[node][1])
+                filedeletetxt.append(
+                    "File Delete: {0}<br>"
+                    "Time: {1}"
+                    .format(
+                        self.nodemetadata[node]['file'],
+                        self.nodemetadata[node]['timestamp']
+                        )
+                               )
 
         # Traverse edges...
         for edge in self.digraph.edges():
@@ -881,6 +934,16 @@ class CuckooJSONReport(object):
                 FileCopyYe.append(self.pos[edge[0]][1])
                 FileCopyYe.append(self.pos[edge[1]][1])
                 FileCopyYe.append(None)
+            if ((self.digraph.node[edge[0]]['type'] == 'PID' and
+                self.digraph.node[edge[1]]['type'] == 'FILEDELETE') or
+                (self.digraph.node[edge[0]]['type'] == 'FILEDELETE' and
+                    self.digraph.node[edge[1]]['type'] == 'FILE')):
+                FileDeleteXe.append(self.pos[edge[0]][0])
+                FileDeleteXe.append(self.pos[edge[1]][0])
+                FileDeleteXe.append(None)
+                FileDeleteYe.append(self.pos[edge[0]][1])
+                FileDeleteYe.append(self.pos[edge[1]][1])
+                FileDeleteYe.append(None)
 
         nodes = []
         edges = []
@@ -1086,6 +1149,27 @@ class CuckooJSONReport(object):
                                 hoverinfo='none')
 
         edges.append(FileCopyEdges)
+
+        # Create the nodes...
+        FileDeleteNodes = Scatter(x=FileDeleteX,
+                                  y=FileDeleteY,
+                                  mode='markers',
+                                  marker=marker,
+                                  name='File Delete',
+                                  text=filedeletetxt,
+                                  hoverinfo='text')
+
+        nodes.append(FileDeleteNodes)
+
+        # Create the edges for the nodes...
+        FileDeleteEdges = Scatter(x=FileDeleteXe,
+                                  y=FileDeleteYe,
+                                  mode='lines',
+                                  line=Line(shape='linear'),
+                                  name='File Delete',
+                                  hoverinfo='none')
+
+        edges.append(FileDeleteEdges)
 
         # Create the edges for the nodes...
         LoadImageEdges = Scatter(x=LoadImageXe,
