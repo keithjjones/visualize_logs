@@ -58,6 +58,16 @@ class CuckooJSONReport(object):
     rootpid = None
     """This is the pid (Node) on top."""
 
+    IPProto = {
+                0: 'IPPROTO_IP',
+                1: 'IPPROTO_ICMP',
+                6: 'IPPROTO_TCP',
+                17: 'IPPROTO_UDP',
+                255: 'IPPROTO_RAW'
+                }
+    """Information available:
+    http://lxr.free-electrons.com/source/include/uapi/linux/in.h"""
+
     def __init__(self, jsonreportfile=None):
         """
         The JSON report file is read and parsed using this class.  This
@@ -163,6 +173,7 @@ class CuckooJSONReport(object):
                 pandas.DataFrame(process['calls'])
 
             calls = self.nodemetadata[nodename]['calls']
+            calls['timestamp'] = pandas.to_datetime(calls['timestamp'])
 
             createprocs = calls[calls['api'] == 'CreateProcessInternalW']
 
@@ -199,8 +210,8 @@ class CuckooJSONReport(object):
 
                     # Get DNS lookups...
                     self._add_dns_lookups(node, calls)
-                    # Get TCP connections...
-                    self._add_tcp_connects(node, calls)
+                    # Add socket activity...
+                    self._add_sockets(node, calls)
 
     def _add_dns_lookups(self, node, calls):
         """
@@ -262,47 +273,114 @@ class CuckooJSONReport(object):
 
         return ipnodename
 
-    def _add_tcp_connects(self, node, calls):
+    def _add_sockets(self, node, calls):
         """
-        Internal function to add TCP connections to the graph.
+        Internal function to add Sockets to the graph.
 
         :param node:  The node name for the calls.
         :param calls:  A pandas.DataFrame of process calls.
         :returns: Nothing.
         """
-        tcpconnects = calls[calls['api'] == 'connect']
+        sockets = calls[calls['api'] == 'socket']
 
-        for i, tcpconnect in tcpconnects.iterrows():
-            ipaddr = None
+        for i, sock in sockets.iterrows():
             socketid = None
-            port = None
-            for arg in tcpconnect['arguments']:
-                if arg['name'] == 'ip':
-                    ipaddr = arg['value']
+            socketproto = None
+
+            for arg in sock['arguments']:
                 if arg['name'] == 'socket':
                     socketid = arg['value']
-                if arg['name'] == 'port':
-                    port = arg['value']
+                if arg['name'] == 'protocol':
+                    if int(arg['value']) in self.IPProto:
+                        socketproto = self.IPProto[int(arg['value'])]
+                    else:
+                        socketproto = arg['value']
 
-                if ipaddr is not None:
-                    ipnodename = self._add_ip(ipaddr)
+            if socketid is not None:
+                # Get a sequential number for the event...
+                # Sockets can be reused...
+                nextid = len(self.nodemetadata)
 
-                    # Get a sequential number for the event...
-                    nextid = len(self.nodemetadata)
+                socketname = 'SOCKET {0}'.format(nextid)
+                self.digraph.add_node(socketname, type='SOCKET')
+                self.nodemetadata[socketname] = dict()
+                self.nodemetadata[socketname]['node_type'] = 'SOCKET'
+                self.nodemetadata[socketname]['socket'] = socketid
+                self.nodemetadata[socketname]['protocol'] = socketproto
+                self.nodemetadata[socketname]['opentime'] =\
+                    sock['timestamp']
 
-                    connnodename = 'TCP CONNECT {0}'.format(nextid)
-                    self.digraph.add_node(connnodename, type='TCPCONNECT')
-                    self.nodemetadata[connnodename] = dict()
-                    self.nodemetadata['node_type'] = "TCPCONNECT"
-                    self.nodemetadata[connnodename]['timestamp'] =\
-                        tcpconnect['timestamp']
-                    self.nodemetadata[connnodename]['ip'] = ipaddr
-                    self.nodemetadata[connnodename]['socket'] = socketid
-                    self.nodemetadata[connnodename]['port'] = port
+                closesockets = calls[(calls['api'] == 'closesocket') &
+                                     (calls['timestamp'] > sock['timestamp'])]
+                try:
+                    closetime = next(closesockets.iterrows())[1]['timestamp']
+                except StopIteration:
+                    closetime = None
+                self.nodemetadata[socketname]['closetime'] = closetime
 
-                    # Connect them up...
-                    self.digraph.add_edge(node, connnodename)
-                    self.digraph.add_edge(connnodename, ipnodename)
+                self.digraph.add_edge(node, socketname)
+
+                self._add_tcp_connects(socketname, calls, socketid,
+                                       sock['timestamp'], closetime)
+
+    def _add_tcp_connects(self, node, calls, socketid, opentime, closetime):
+        """
+        Internal function to add TCP connections to the graph.
+
+        :param node:  The socket node name for the calls.
+        :param calls:  A pandas.DataFrame of process calls.
+        :param socketid:  The socket opened for these connections.
+        :param opentime:  The time the socket opened.
+        :param closetime:  The time the socket closed.
+        :returns: Nothing.
+        """
+        if closetime is not None:
+            tcpconnects = calls[(calls['api'] == 'connect') &
+                                (calls['timestamp'] >= opentime) &
+                                (calls['timestamp'] <= closetime)]
+        else:
+            tcpconnects = calls[(calls['api'] == 'connect') &
+                                (calls['timestamp'] >= opentime)]
+
+        for i, tcpconnect in tcpconnects.iterrows():
+            PlotConnect = False
+            for arg in tcpconnect['arguments']:
+                if (arg['name'] == 'socket' and
+                        arg['value'] == socketid):
+                    PlotConnect = True
+
+            if PlotConnect is True:
+                ipaddr = None
+                socketid = None
+                port = None
+                for arg in tcpconnect['arguments']:
+                    if arg['name'] == 'ip':
+                        ipaddr = arg['value']
+                    if arg['name'] == 'socket':
+                        socketid = arg['value']
+                    if arg['name'] == 'port':
+                        port = arg['value']
+
+                    if ipaddr is not None:
+                        ipnodename = self._add_ip(ipaddr)
+
+                        # Get a sequential number for the event...
+                        nextid = len(self.nodemetadata)
+
+                        connnodename = 'TCP CONNECT {0}'.format(nextid)
+                        self.digraph.add_node(connnodename, type='TCPCONNECT')
+                        self.nodemetadata[connnodename] = dict()
+                        self.nodemetadata[connnodename]['node_type'] =\
+                            "TCPCONNECT"
+                        self.nodemetadata[connnodename]['timestamp'] =\
+                            tcpconnect['timestamp']
+                        self.nodemetadata[connnodename]['ip'] = ipaddr
+                        self.nodemetadata[connnodename]['socket'] = socketid
+                        self.nodemetadata[connnodename]['port'] = port
+
+                        # Connect them up...
+                        self.digraph.add_edge(node, connnodename)
+                        self.digraph.add_edge(connnodename, ipnodename)
 
     def _create_positions_digraph(self):
         """
@@ -339,6 +417,8 @@ class CuckooJSONReport(object):
         HostY = []
         IPX = []
         IPY = []
+        SocketX = []
+        SocketY = []
         TCPConnectX = []
         TCPConnectY = []
 
@@ -349,6 +429,8 @@ class CuckooJSONReport(object):
         GetNameYe = []
         DNSXe = []
         DNSYe = []
+        SocketXe = []
+        SocketYe = []
         TCPConnectXe = []
         TCPConnectYe = []
 
@@ -356,6 +438,7 @@ class CuckooJSONReport(object):
         proctxt = []
         hosttxt = []
         iptxt = []
+        sockettxt = []
         tcpconnecttxt = []
 
         # Traverse nodes...
@@ -397,6 +480,21 @@ class CuckooJSONReport(object):
                         self.nodemetadata[node]['ip']
                         )
                                )
+            if self.digraph.node[node]['type'] == 'SOCKET':
+                SocketX.append(self.pos[node][0])
+                SocketY.append(self.pos[node][1])
+                sockettxt.append(
+                    "Socket: {0}<br>"
+                    "Protocol: {1}<br>"
+                    "Open Time: {2}<br>"
+                    "Close TIme: {3}"
+                    .format(
+                        self.nodemetadata[node]['socket'],
+                        self.nodemetadata[node]['protocol'],
+                        self.nodemetadata[node]['opentime'],
+                        self.nodemetadata[node]['closetime']
+                        )
+                               )
             if self.digraph.node[node]['type'] == 'TCPCONNECT':
                 TCPConnectX.append(self.pos[node][0])
                 TCPConnectY.append(self.pos[node][1])
@@ -404,11 +502,13 @@ class CuckooJSONReport(object):
                     "TCP Connect:<br>"
                     "IP: {0}<br>"
                     "Port: {1}<br>"
-                    "Socket: {2}"
+                    "Socket: {2}<br>"
+                    "Time: {3}"
                     .format(
                         self.nodemetadata[node]['ip'],
                         self.nodemetadata[node]['port'],
-                        self.nodemetadata[node]['socket']
+                        self.nodemetadata[node]['socket'],
+                        self.nodemetadata[node]['timestamp']
                         )
                                )
 
@@ -438,7 +538,15 @@ class CuckooJSONReport(object):
                 DNSYe.append(self.pos[edge[0]][1])
                 DNSYe.append(self.pos[edge[1]][1])
                 DNSYe.append(None)
-            if ((self.digraph.node[edge[0]]['type'] == 'PID' and
+            if (self.digraph.node[edge[0]]['type'] == 'PID' and
+                    self.digraph.node[edge[1]]['type'] == 'SOCKET'):
+                SocketXe.append(self.pos[edge[0]][0])
+                SocketXe.append(self.pos[edge[1]][0])
+                SocketXe.append(None)
+                SocketYe.append(self.pos[edge[0]][1])
+                SocketYe.append(self.pos[edge[1]][1])
+                SocketYe.append(None)
+            if ((self.digraph.node[edge[0]]['type'] == 'SOCKET' and
                 self.digraph.node[edge[1]]['type'] == 'TCPCONNECT') or
                 (self.digraph.node[edge[0]]['type'] == 'TCPCONNECT' and
                     self.digraph.node[edge[1]]['type'] == 'IP')):
@@ -523,6 +631,30 @@ class CuckooJSONReport(object):
 
         nodes.append(IPNodes)
         edges.append(DNSEdges)
+
+        # SOCKETS...
+
+        marker = Marker(symbol='diamond', size=7)
+
+        # Create the nodes...
+        SocketNodes = Scatter(x=SocketX,
+                              y=SocketY,
+                              mode='markers',
+                              marker=marker,
+                              name='Socket',
+                              text=sockettxt,
+                              hoverinfo='text')
+
+        # Create the edges for the nodes...
+        SocketEdges = Scatter(x=SocketXe,
+                              y=SocketYe,
+                              mode='lines',
+                              line=Line(shape='linear'),
+                              name='Create Socket',
+                              hoverinfo='none')
+
+        nodes.append(SocketNodes)
+        edges.append(SocketEdges)
 
         # TCP CONNECTS...
 
