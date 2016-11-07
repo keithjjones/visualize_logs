@@ -276,6 +276,9 @@ class CuckooJSONReport(object):
                     # Get file writes...
                     self._add_file_writes(node, calls)
 
+                    # Get file reads...
+                    self._add_file_reads(node, calls)
+
                     # Get file copies...
                     self._add_file_copies(node, calls)
 
@@ -525,6 +528,41 @@ class CuckooJSONReport(object):
 
                 self.digraph.add_edge(node, fwnodename)
                 self.digraph.add_edge(fwnodename, filenodename)
+
+    def _add_file_reads(self, node, calls):
+        """
+        Internal function that adds the file reads in the calls for
+        the PID node.
+
+        :param node:  PID node name.
+        :param calls:  Calls for node.
+        :returns: Nothing.
+        """
+        filereads = calls[(calls['api'] == 'NtReadFile') &
+                          (calls['status'] == True)]
+
+        for i, fileread in filereads.iterrows():
+            filename = None
+            for arg in fileread['arguments']:
+                if arg['name'] == 'HandleName':
+                    filename = arg['value']
+            if filename is not None:
+                if (self._search_re(filename, self.ignorepaths) and
+                        not self._search_re(filename, self.includepaths)):
+                    continue
+                filenodename = self._add_file(filename)
+                # Get a sequential number for the event...
+                nextid = len(self.nodemetadata)
+                frnodename = "FILE READ {0}".format(nextid)
+                self.nodemetadata[frnodename] = dict()
+                self.nodemetadata[frnodename]['file'] = filename
+                self.nodemetadata[frnodename]['node_type'] = 'FILEREAD'
+                self.nodemetadata[frnodename]['timestamp'] =\
+                    fileread['timestamp']
+                self.digraph.add_node(frnodename, type='FILEREAD')
+
+                self.digraph.add_edge(node, frnodename)
+                self.digraph.add_edge(frnodename, filenodename)
 
     def _add_network_activity(self):
         """
@@ -784,6 +822,8 @@ class CuckooJSONReport(object):
         FileDeleteY = []
         FileMoveX = []
         FileMoveY = []
+        FileReadX = []
+        FileReadY = []
 
         # Edge coordinates...
         ProcessXe = []
@@ -808,6 +848,8 @@ class CuckooJSONReport(object):
         FileDeleteYe = []
         FileMoveXe = []
         FileMoveYe = []
+        FileReadXe = []
+        FileReadYe = []
 
         # Hover Text...
         proctxt = []
@@ -821,6 +863,7 @@ class CuckooJSONReport(object):
         filecopytxt = []
         filedeletetxt = []
         filemovetxt = []
+        filereadtxt = []
 
         # Traverse nodes...
         for node in self.digraph:
@@ -972,6 +1015,17 @@ class CuckooJSONReport(object):
                         self.nodemetadata[node]['timestamp']
                         )
                                )
+            if self.digraph.node[node]['type'] == 'FILEREAD':
+                FileReadX.append(self.pos[node][0])
+                FileReadY.append(self.pos[node][1])
+                filereadtxt.append(
+                    "File Read: {0}<br>"
+                    "Time: {1}"
+                    .format(
+                        self.nodemetadata[node]['file'],
+                        self.nodemetadata[node]['timestamp']
+                        )
+                               )
 
         # Traverse edges...
         for edge in self.digraph.edges():
@@ -1075,6 +1129,16 @@ class CuckooJSONReport(object):
                 FileMoveYe.append(self.pos[edge[0]][1])
                 FileMoveYe.append(self.pos[edge[1]][1])
                 FileMoveYe.append(None)
+            if ((self.digraph.node[edge[0]]['type'] == 'PID' and
+                self.digraph.node[edge[1]]['type'] == 'FILEREAD') or
+                (self.digraph.node[edge[0]]['type'] == 'FILEREAD' and
+                    self.digraph.node[edge[1]]['type'] == 'FILE')):
+                FileReadXe.append(self.pos[edge[0]][0])
+                FileReadXe.append(self.pos[edge[1]][0])
+                FileReadXe.append(None)
+                FileReadYe.append(self.pos[edge[0]][1])
+                FileReadYe.append(self.pos[edge[1]][1])
+                FileReadYe.append(None)
 
         nodes = []
         edges = []
@@ -1322,6 +1386,29 @@ class CuckooJSONReport(object):
                                 hoverinfo='none')
 
         edges.append(FileMoveEdges)
+
+        marker = Marker(symbol='triangle-up', size=7)
+
+        # Create the nodes...
+        FileReadNodes = Scatter(x=FileReadX,
+                                y=FileReadY,
+                                mode='markers',
+                                marker=marker,
+                                name='File Read',
+                                text=filereadtxt,
+                                hoverinfo='text')
+
+        nodes.append(FileReadNodes)
+
+        # Create the edges for the nodes...
+        FileReadEdges = Scatter(x=FileReadXe,
+                                y=FileReadYe,
+                                mode='lines',
+                                line=Line(shape='linear'),
+                                name='File Read',
+                                hoverinfo='none')
+
+        edges.append(FileReadEdges)
 
         # Create the edges for the nodes...
         LoadImageEdges = Scatter(x=LoadImageXe,
