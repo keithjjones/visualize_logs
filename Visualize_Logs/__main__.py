@@ -38,11 +38,11 @@ def plotcuckoojson():
 
     parser.add_argument('-na',
                         '--nonetwork', action='store_true',
-                        help='Turn off network activity')
+                        help='Turn off all network activity')
 
     parser.add_argument('-fa',
                         '--nofiles', action='store_true',
-                        help='Turn off file activity')
+                        help='Turn off all file activity')
 
     parser.add_argument('-fc',
                         '--nofilecreates', action='store_true',
@@ -70,7 +70,7 @@ def plotcuckoojson():
 
     parser.add_argument('-ra',
                         '--noregistry', action='store_true',
-                        help='Turn off registry activity')
+                        help='Turn off all registry activity')
 
     parser.add_argument('-ignpaths',
                         '--ignorepathsfile', metavar='IgnPathsFile.txt',
