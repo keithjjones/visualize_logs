@@ -61,8 +61,26 @@ class CuckooJSONReport(object):
     IPProto = {
                 0: 'IPPROTO_IP',
                 1: 'IPPROTO_ICMP',
+                4: 'IPPROTO_IGMP',
                 6: 'IPPROTO_TCP',
+                8: 'IPPROTO_EGP',
+                12: 'IPPROTO_PUP',
                 17: 'IPPROTO_UDP',
+                29: 'IPPROTO_IDP',
+                33: 'IPPROTO_DCCP',
+                41: 'IPPROTO_IPV6',
+                46: 'IPPROTO_RSVP',
+                47: 'IPPROTO_GRE',
+                50: 'IPPROTO_ESP',
+                51: 'IPPROTO_AH',
+                92: 'IPPROTO_MTP',
+                94: 'IPPROTO_BEETPH',
+                98: 'IPPROTO_ENCAP',
+                103: 'IPPROTO_PIM',
+                108: 'IPPROTO_COMP',
+                132: 'IPPROTO_SCTP',
+                136: 'IPPROTO_UDPLITE',
+                137: 'IPPROTO_MPLS',
                 255: 'IPPROTO_RAW'
                 }
     """Information available:
