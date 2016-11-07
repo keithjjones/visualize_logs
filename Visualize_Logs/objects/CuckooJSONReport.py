@@ -241,6 +241,9 @@ class CuckooJSONReport(object):
                     # Get file writes...
                     self._add_file_writes(node, calls)
 
+                    # Get file copies...
+                    self._add_file_copies(node, calls)
+
                     # Connect PIDs to files
                     self._connect_file_to_pid()
 
@@ -259,6 +262,49 @@ class CuckooJSONReport(object):
                         filepath = self.nodemetadata[linknode]['file']
                         if pidpath == filepath:
                             self.digraph.add_edge(linknode, node)
+
+    def _add_file_copies(self, node, calls):
+        """
+        Internal function that adds the file copies in the calls
+        for the PID node.
+
+        :param node: PID node name.
+        :param calls:  Calls for node.
+        :returns: Nothing.
+        """
+        filecopies = calls[((calls['api'] == 'CopyFileW') |
+                            (calls['api'] == 'CopyFileA')) &
+                           (calls['status'] == True)]
+
+        for i, filecreate in filecopies.iterrows():
+            existedbefore = None
+            existingfilename = None
+            newfilename = None
+            for arg in filecreate['arguments']:
+                if arg['name'] == 'ExistingFileName':
+                    existingfilename = arg['value']
+                if arg['name'] == 'ExistedBefore':
+                    existedbefore = arg['value']
+                if arg['name'] == 'NewFileName':
+                    newfilename = arg['value']
+            if newfilename is not None:
+                newfilenodename = self._add_file(newfilename)
+                existingfilenodename = self._add_file(existingfilename)
+                # Get a sequential number for the event...
+                nextid = len(self.nodemetadata)
+                fcnodename = "FILE COPY {0}".format(nextid)
+                self.nodemetadata[fcnodename] = dict()
+                self.nodemetadata[fcnodename]['existingfile'] = existingfilename
+                self.nodemetadata[fcnodename]['newfile'] = newfilename
+                self.nodemetadata[fcnodename]['node_type'] = 'FILECOPY'
+                self.nodemetadata[fcnodename]['existedbefore'] = existedbefore
+                self.nodemetadata[fcnodename]['timestamp'] =\
+                    filecreate['timestamp']
+                self.digraph.add_node(fcnodename, type='FILECOPY')
+
+                self.digraph.add_edge(node, fcnodename)
+                self.digraph.add_edge(fcnodename, newfilenodename)
+                self.digraph.add_edge(fcnodename, existingfilenodename)
 
     def _add_file_creates(self, node, calls):
         """
@@ -592,6 +638,8 @@ class CuckooJSONReport(object):
         FileCreateY = []
         FileWriteX = []
         FileWriteY = []
+        FileCopyX = []
+        FileCopyY = []
 
         # Edge coordinates...
         ProcessXe = []
@@ -610,6 +658,8 @@ class CuckooJSONReport(object):
         LoadImageYe = []
         FileWriteXe = []
         FileWriteYe = []
+        FileCopyXe = []
+        FileCopyYe = []
 
         # Hover Text...
         proctxt = []
@@ -620,6 +670,7 @@ class CuckooJSONReport(object):
         filetxt = []
         filecreatetxt = []
         filewritetxt = []
+        filecopytxt = []
 
         # Traverse nodes...
         for node in self.digraph:
@@ -730,6 +781,22 @@ class CuckooJSONReport(object):
                         self.nodemetadata[node]['timestamp']
                         )
                                )
+            if self.digraph.node[node]['type'] == 'FILECOPY':
+                FileCopyX.append(self.pos[node][0])
+                FileCopyY.append(self.pos[node][1])
+                filecopytxt.append(
+                    "File Copy:<br>"
+                    "Existing File: {0}<br>"
+                    "New File: {1}<br>"
+                    "Existed Before: {2}<br>"
+                    "Time: {3}"
+                    .format(
+                        self.nodemetadata[node]['existingfile'],
+                        self.nodemetadata[node]['newfile'],
+                        self.nodemetadata[node]['existedbefore'],
+                        self.nodemetadata[node]['timestamp']
+                        )
+                               )
 
         # Traverse edges...
         for edge in self.digraph.edges():
@@ -803,6 +870,16 @@ class CuckooJSONReport(object):
                 LoadImageYe.append(self.pos[edge[0]][1])
                 LoadImageYe.append(self.pos[edge[1]][1])
                 LoadImageYe.append(None)
+            if ((self.digraph.node[edge[0]]['type'] == 'PID' and
+                self.digraph.node[edge[1]]['type'] == 'FILECOPY') or
+                (self.digraph.node[edge[0]]['type'] == 'FILECOPY' and
+                    self.digraph.node[edge[1]]['type'] == 'FILE')):
+                FileCopyXe.append(self.pos[edge[0]][0])
+                FileCopyXe.append(self.pos[edge[1]][0])
+                FileCopyXe.append(None)
+                FileCopyYe.append(self.pos[edge[0]][1])
+                FileCopyYe.append(self.pos[edge[1]][1])
+                FileCopyYe.append(None)
 
         nodes = []
         edges = []
@@ -987,6 +1064,27 @@ class CuckooJSONReport(object):
                                  hoverinfo='none')
 
         edges.append(FileWriteEdges)
+
+        # Create the nodes...
+        FileCopyNodes = Scatter(x=FileCopyX,
+                                y=FileCopyY,
+                                mode='markers',
+                                marker=marker,
+                                name='File Copy',
+                                text=filecopytxt,
+                                hoverinfo='text')
+
+        nodes.append(FileCopyNodes)
+
+        # Create the edges for the nodes...
+        FileCopyEdges = Scatter(x=FileCopyXe,
+                                y=FileCopyYe,
+                                mode='lines',
+                                line=Line(shape='linear'),
+                                name='File Copy',
+                                hoverinfo='none')
+
+        edges.append(FileCopyEdges)
 
         # Create the edges for the nodes...
         LoadImageEdges = Scatter(x=LoadImageXe,
