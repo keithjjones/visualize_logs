@@ -48,6 +48,16 @@ def plotcuckoojson():
                         '--noregistry', action='store_true',
                         help='Turn off registry activity')
 
+    parser.add_argument('-gp',
+                        '--graphvizprog', default='sfdp',
+                        help='The graphviz layout program to use.  Valid '
+                             'options are dot, neato, twopi, circo, fdp, '
+                             'sfdp, patchwork and osage.  Research the '
+                             'graphviz website for more information on '
+                             'these types of layouts.  IF YOU SUPPLY AN '
+                             'INVALID VALUE THIS PROGRAM WILL NOT WORK! '
+                             'Default: sfdp')
+
     # Parse command line arguments.
     args = parser.parse_args()
 
@@ -59,12 +69,13 @@ def plotcuckoojson():
         exit(1)
 
     print('Reading log: {0}'.format(jsonfile))
-    cjr = CuckooJSONReport(jsonfile, plotnetwork=not(args.nonetwork),
-                           plotfiles=not(args.nofiles),
-                           plotregistry=not(args.noregistry))
+    vl = CuckooJSONReport(jsonfile, plotnetwork=not(args.nonetwork),
+                          plotfiles=not(args.nofiles),
+                          plotregistry=not(args.noregistry))
 
     print('Plotting log: {0}'.format(jsonfile))
-    cjr.plotgraph(filename=filename, title=args.title)
+    vl.plotgraph(filename=filename, title=args.title,
+                 graphvizprog=args.graphvizprog)
 
 
 #
@@ -191,6 +202,16 @@ def plotprocmoncsv():
                         'in the Path column.  Overrides ignores. '
                         'One RE per line.')
 
+    parser.add_argument('-gp',
+                        '--graphvizprog', default='sfdp',
+                        help='The graphviz layout program to use.  Valid '
+                             'options are dot, neato, twopi, circo, fdp, '
+                             'sfdp, patchwork and osage.  Research the '
+                             'graphviz website for more information on '
+                             'these types of layouts.  IF YOU SUPPLY AN '
+                             'INVALID VALUE THIS PROGRAM WILL NOT WORK! '
+                             'Default: sfdp')
+
     # Parse command line arguments.
     args = parser.parse_args()
 
@@ -307,5 +328,6 @@ def plotprocmoncsv():
         ignorepaths=ignorepaths,
         includepaths=includepaths,
         filename=filename,
-        title=args.title
+        title=args.title,
+        graphvizprog=args.graphvizprog
         )
