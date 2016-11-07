@@ -48,6 +48,17 @@ def plotcuckoojson():
                         '--noregistry', action='store_true',
                         help='Turn off registry activity')
 
+    parser.add_argument('-ignpaths',
+                        '--ignorepathsfile', metavar='IgnPathsFile.txt',
+                        help='File containing regular expressions to ignore '
+                        'for files and registry.  One RE per line.')
+
+    parser.add_argument('-inclpaths',
+                        '--includepathsfile', metavar='InclPathsFile.txt',
+                        help='File containing regular expressions to include '
+                        'for files and registry.  Overrides ignores. '
+                        'One RE per line.')
+
     parser.add_argument('-gp',
                         '--graphvizprog', default='sfdp',
                         help='The graphviz layout program to use.  Valid '
@@ -68,10 +79,40 @@ def plotcuckoojson():
         print('File does not exist: {0}'.format(jsonfile))
         exit(1)
 
+    if args.includepathsfile is not None:
+        inclfile = args.includepathsfile
+        if not os.path.exists(inclfile):
+            print('Include file does not exist: {0}'.format(inclfile))
+            exit(1)
+        with open(inclfile) as infile:
+            try:
+                includepaths = infile.read().splitlines()
+            except:
+                print('ERROR:  File problem: {0}'.format(inclfile))
+                exit(1)
+    else:
+        includepaths = None
+
+    if args.ignorepathsfile is not None:
+        ignfile = args.ignorepathsfile
+        if not os.path.exists(ignfile):
+            print('Ignore file does not exist: {0}'.format(ignfile))
+            exit(1)
+        with open(ignfile) as infile:
+            try:
+                ignorepaths = infile.read().splitlines()
+            except:
+                print('ERROR:  File problem: {0}'.format(ignfile))
+                exit(1)
+    else:
+        ignorepaths = None
+
     print('Reading log: {0}'.format(jsonfile))
     vl = CuckooJSONReport(jsonfile, plotnetwork=not(args.nonetwork),
                           plotfiles=not(args.nofiles),
-                          plotregistry=not(args.noregistry))
+                          plotregistry=not(args.noregistry),
+                          ignorepaths=ignorepaths,
+                          includepaths=includepaths)
 
     print('Plotting log: {0}'.format(jsonfile))
     vl.plotgraph(filename=filename, title=args.title,
@@ -221,7 +262,7 @@ def plotprocmoncsv():
     if args.includepathsfile is not None:
         inclfile = args.includepathsfile
         if not os.path.exists(inclfile):
-            print('File does not exist: {0}'.format(inclfile))
+            print('Include file does not exist: {0}'.format(inclfile))
             exit(1)
         with open(inclfile) as infile:
             try:
@@ -235,7 +276,7 @@ def plotprocmoncsv():
     if args.ignorepathsfile is not None:
         ignfile = args.ignorepathsfile
         if not os.path.exists(ignfile):
-            print('File does not exist: {0}'.format(ignfile))
+            print('Ignore file does not exist: {0}'.format(ignfile))
             exit(1)
         with open(ignfile) as infile:
             try:

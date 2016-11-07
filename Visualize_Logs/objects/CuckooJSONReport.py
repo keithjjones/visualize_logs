@@ -58,6 +58,12 @@ class CuckooJSONReport(object):
     rootpid = None
     """This is the pid (Node) on top."""
 
+    ignorepaths = []
+    """List of regular expressions to ignore in file or registry data."""
+
+    includepaths = []
+    """List of regular expressions to include in file or registry data."""
+
     IPProto = {
                 0: 'IPPROTO_IP',
                 1: 'IPPROTO_ICMP',
@@ -89,7 +95,9 @@ class CuckooJSONReport(object):
     def __init__(self, jsonreportfile=None,
                  plotnetwork=True,
                  plotfiles=True,
-                 plotregistry=True):
+                 plotregistry=True,
+                 ignorepaths=None,
+                 includepaths=None):
         """
         The JSON report file is read and parsed using this class.  This
         could take a whiel depending on how big your JSON report is.
@@ -102,9 +110,19 @@ class CuckooJSONReport(object):
         :param plotnetwork: Set to False to ignore network activity.
         :param plotfiles: Set to False to ignore file activity.
         :param plotregistry: Set to False to ignore registry activity.
+        :param ignorepaths: A list of regular expressions to ignore for
+            files and registry values.
+        :param includepaths: A list of regular expressions to include for
+            files and registry values.  Overrides ignore paths.
         :returns: An object.
         :rtype: CuckooJSONReport object.
         """
+        if ignorepaths is not None and isinstance(ignorepaths, list):
+            self.ignorepaths = ignorepaths
+
+        if includepaths is not None and isinstance(includepaths, list):
+            self.includepaths = includepaths
+
         if not os.path.exists(jsonreportfile):
             raise Exceptions.VisualizeLogsInvalidFile(jsonreportfile)
         else:
@@ -126,6 +144,23 @@ class CuckooJSONReport(object):
         if plotfiles is True:
             # Add file activity to the graph...
             self._add_file_activity()
+
+    def _search_re(self, string, expressions):
+        """
+        Internal function to check if string is selected
+        by regular expressions in expression list.
+        Ignores case!
+
+        :param string:  String to search.
+        :param expressions: List of regular expressions to search.
+        :returns: True if expressions fire on string, False otherwise.
+        """
+        for e in expressions:
+            m = re.search(string, e, re.IGNORECASE)
+            if m:
+                return True
+
+        return False
 
     def _add_all_processes(self):
         """
@@ -293,6 +328,10 @@ class CuckooJSONReport(object):
                 if arg['name'] == 'NewFileName':
                     newfilename = arg['value']
             if newfilename is not None:
+                if (self._search_re(newfilename, self.ignorepaths) and
+                        not self._search_re(newfilename, self.includepaths)):
+                    continue
+
                 newfilenodename = self._add_file(newfilename)
                 existingfilenodename = self._add_file(existingfilename)
                 # Get a sequential number for the event...
@@ -336,6 +375,13 @@ class CuckooJSONReport(object):
                 if arg['name'] == 'NewFileName':
                     newfilename = arg['value']
             if newfilename is not None:
+                if (self._search_re(newfilename, self.ignorepaths) and
+                        not self._search_re(newfilename, self.includepaths)):
+                    continue
+                if (self._search_re(existingfilename, self.ignorepaths) and
+                    not
+                        self._search_re(existingfilename, self.includepaths)):
+                    continue
                 newfilenodename = self._add_file(newfilename)
                 existingfilenodename = self._add_file(existingfilename)
                 # Get a sequential number for the event...
@@ -374,6 +420,9 @@ class CuckooJSONReport(object):
                 if arg['name'] == 'FileName':
                     filename = arg['value']
             if filename is not None:
+                if (self._search_re(filename, self.ignorepaths) and
+                        not self._search_re(filename, self.includepaths)):
+                    continue
                 filenodename = self._add_file(filename)
                 # Get a sequential number for the event...
                 nextid = len(self.nodemetadata)
@@ -419,6 +468,9 @@ class CuckooJSONReport(object):
                 if arg['name'] == 'FileAttributes':
                     fileattribtes = arg['value']
             if filename is not None:
+                if (self._search_re(filename, self.ignorepaths) and
+                        not self._search_re(filename, self.includepaths)):
+                    continue
                 filenodename = self._add_file(filename)
                 # Get a sequential number for the event...
                 nextid = len(self.nodemetadata)
@@ -457,6 +509,9 @@ class CuckooJSONReport(object):
                 if arg['name'] == 'HandleName':
                     filename = arg['value']
             if filename is not None:
+                if (self._search_re(filename, self.ignorepaths) and
+                        not self._search_re(filename, self.includepaths)):
+                    continue
                 filenodename = self._add_file(filename)
                 # Get a sequential number for the event...
                 nextid = len(self.nodemetadata)
