@@ -294,7 +294,8 @@ class CuckooJSONReport(object):
                 nextid = len(self.nodemetadata)
                 fcnodename = "FILE COPY {0}".format(nextid)
                 self.nodemetadata[fcnodename] = dict()
-                self.nodemetadata[fcnodename]['existingfile'] = existingfilename
+                self.nodemetadata[fcnodename]['existingfile'] =\
+                    existingfilename
                 self.nodemetadata[fcnodename]['newfile'] = newfilename
                 self.nodemetadata[fcnodename]['node_type'] = 'FILECOPY'
                 self.nodemetadata[fcnodename]['existedbefore'] = existedbefore
