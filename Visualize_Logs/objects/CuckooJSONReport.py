@@ -558,6 +558,7 @@ class CuckooJSONReport(object):
         :param ip: File path.
         :returns: Node name for the file.
         """
+        filename = filename.replace('\\', '\\\\')
         filenodename = '"FILE {0}"'.format(filename)
         if filenodename not in self.nodemetadata:
             self.nodemetadata[filenodename] = dict()
