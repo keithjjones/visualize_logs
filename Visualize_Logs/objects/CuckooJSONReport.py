@@ -238,6 +238,9 @@ class CuckooJSONReport(object):
                     # Get file creates...
                     self._add_file_creates(node, calls)
 
+                    # Get file writes...
+                    self._add_file_writes(node, calls)
+
                     # Connect PIDs to files
                     self._connect_file_to_pid()
 
@@ -262,7 +265,7 @@ class CuckooJSONReport(object):
         Internal function that adds the file creates in the calls
         for the PID node.
 
-        :param node: PID node name
+        :param node: PID node name.
         :param calls:  Calls for node.
         :returns: Nothing.
         """
@@ -306,6 +309,38 @@ class CuckooJSONReport(object):
 
                 self.digraph.add_edge(node, fcnodename)
                 self.digraph.add_edge(fcnodename, filenodename)
+
+    def _add_file_writes(self, node, calls):
+        """
+        Internal function that adds the file writes in the calls for
+        the PID node.
+
+        :param node:  PID node name.
+        :param calls:  Calls for node.
+        :returns: Nothing.
+        """
+        filewrites = calls[(calls['api'] == 'NtWriteFile') &
+                           (calls['status'] == True)]
+
+        for i, filewrite in filewrites.iterrows():
+            filename = None
+            for arg in filewrite['arguments']:
+                if arg['name'] == 'HandleName':
+                    filename = arg['value']
+            if filename is not None:
+                filenodename = self._add_file(filename)
+                # Get a sequential number for the event...
+                nextid = len(self.nodemetadata)
+                fwnodename = "FILE WRITE {0}".format(nextid)
+                self.nodemetadata[fwnodename] = dict()
+                self.nodemetadata[fwnodename]['file'] = filename
+                self.nodemetadata[fwnodename]['node_type'] = 'FILEWRITE'
+                self.nodemetadata[fwnodename]['timestamp'] =\
+                    filewrite['timestamp']
+                self.digraph.add_node(fwnodename, type='FILEWRITE')
+
+                self.digraph.add_edge(node, fwnodename)
+                self.digraph.add_edge(fwnodename, filenodename)
 
     def _add_network_activity(self):
         """
@@ -555,6 +590,8 @@ class CuckooJSONReport(object):
         FileY = []
         FileCreateX = []
         FileCreateY = []
+        FileWriteX = []
+        FileWriteY = []
 
         # Edge coordinates...
         ProcessXe = []
@@ -571,6 +608,8 @@ class CuckooJSONReport(object):
         FileCreateYe = []
         LoadImageXe = []
         LoadImageYe = []
+        FileWriteXe = []
+        FileWriteYe = []
 
         # Hover Text...
         proctxt = []
@@ -580,6 +619,7 @@ class CuckooJSONReport(object):
         tcpconnecttxt = []
         filetxt = []
         filecreatetxt = []
+        filewritetxt = []
 
         # Traverse nodes...
         for node in self.digraph:
@@ -679,6 +719,17 @@ class CuckooJSONReport(object):
                         self.nodemetadata[node]['timestamp']
                         )
                                )
+            if self.digraph.node[node]['type'] == 'FILEWRITE':
+                FileWriteX.append(self.pos[node][0])
+                FileWriteY.append(self.pos[node][1])
+                filewritetxt.append(
+                    "File Write: {0}<br>"
+                    "Time: {1}"
+                    .format(
+                        self.nodemetadata[node]['file'],
+                        self.nodemetadata[node]['timestamp']
+                        )
+                               )
 
         # Traverse edges...
         for edge in self.digraph.edges():
@@ -734,6 +785,16 @@ class CuckooJSONReport(object):
                 FileCreateYe.append(self.pos[edge[0]][1])
                 FileCreateYe.append(self.pos[edge[1]][1])
                 FileCreateYe.append(None)
+            if ((self.digraph.node[edge[0]]['type'] == 'PID' and
+                self.digraph.node[edge[1]]['type'] == 'FILEWRITE') or
+                (self.digraph.node[edge[0]]['type'] == 'FILEWRITE' and
+                    self.digraph.node[edge[1]]['type'] == 'FILE')):
+                FileWriteXe.append(self.pos[edge[0]][0])
+                FileWriteXe.append(self.pos[edge[1]][0])
+                FileWriteXe.append(None)
+                FileWriteYe.append(self.pos[edge[0]][1])
+                FileWriteYe.append(self.pos[edge[1]][1])
+                FileWriteYe.append(None)
             if (self.digraph.node[edge[0]]['type'] == 'FILE' and
                     self.digraph.node[edge[1]]['type'] == 'PID'):
                 LoadImageXe.append(self.pos[edge[0]][0])
@@ -905,6 +966,27 @@ class CuckooJSONReport(object):
                                   hoverinfo='none')
 
         edges.append(FileCreateEdges)
+
+        # Create the nodes...
+        FileWriteNodes = Scatter(x=FileWriteX,
+                                 y=FileWriteY,
+                                 mode='markers',
+                                 marker=marker,
+                                 name='File Write',
+                                 text=filewritetxt,
+                                 hoverinfo='text')
+
+        nodes.append(FileWriteNodes)
+
+        # Create the edges for the nodes...
+        FileWriteEdges = Scatter(x=FileWriteXe,
+                                 y=FileWriteYe,
+                                 mode='lines',
+                                 line=Line(shape='linear'),
+                                 name='File Write',
+                                 hoverinfo='none')
+
+        edges.append(FileWriteEdges)
 
         # Create the edges for the nodes...
         LoadImageEdges = Scatter(x=LoadImageXe,
