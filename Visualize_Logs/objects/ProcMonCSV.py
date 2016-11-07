@@ -1078,6 +1078,7 @@ class ProcMonCSV(object):
             edges.append(UDPSendEdges)
 
         # HOSTS...
+
         if (self.plottcpconnects is True or
             self.plotudprecvs is True or
                 self.plotudpsends is True):
