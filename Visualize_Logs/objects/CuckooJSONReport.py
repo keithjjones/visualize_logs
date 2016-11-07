@@ -1213,7 +1213,7 @@ class CuckooJSONReport(object):
                                y=GetNameYe,
                                mode='lines',
                                line=Line(shape='linear',
-                                         color='rgb(23,190,207)'),
+                                         color='rgb(174,199,232)'),
                                name='DNS Query',
                                hoverinfo='none')
 
@@ -1247,7 +1247,7 @@ class CuckooJSONReport(object):
 
         # SOCKETS...
 
-        marker = Marker(symbol='diamond', size=7)
+        marker = Marker(symbol='diamond', size=7, color='rgb(277,119,194)')
 
         # Create the nodes...
         SocketNodes = Scatter(x=SocketX,
@@ -1272,7 +1272,7 @@ class CuckooJSONReport(object):
 
         # TCP CONNECTS...
 
-        marker = Marker(symbol='triangle-down', size=7)
+        marker = Marker(symbol='diamond', size=7, color='rgb(44,160,44)')
 
         # Create the nodes...
         TCPConnectNodes = Scatter(x=TCPConnectX,
@@ -1288,7 +1288,7 @@ class CuckooJSONReport(object):
                                   y=TCPConnectYe,
                                   mode='lines',
                                   line=Line(shape='linear',
-                                            color='rgb(31,119,180)'),
+                                            color='rgb(44,160,44)'),
                                   name='TCP Connect',
                                   hoverinfo='none')
 
@@ -1310,7 +1310,8 @@ class CuckooJSONReport(object):
 
         nodes.append(FileNodes)
 
-        marker = Marker(symbol='triangle-down', size=7)
+        marker = Marker(symbol='triangle-down', size=7,
+                        color='rgb(123,102,210)')
 
         # Create the nodes...
         FileCreateNodes = Scatter(x=FileCreateX,
@@ -1328,11 +1329,14 @@ class CuckooJSONReport(object):
                                   y=FileCreateYe,
                                   mode='lines',
                                   line=Line(shape='linear',
-                                            color='rgb(177,3,24)'),
+                                            color='rgb(123,102,210)'),
                                   name='File Create',
                                   hoverinfo='none')
 
         edges.append(FileCreateEdges)
+
+        marker = Marker(symbol='triangle-down', size=7,
+                        color='rgb(255,187,120)')
 
         # Create the nodes...
         FileWriteNodes = Scatter(x=FileWriteX,
@@ -1350,11 +1354,14 @@ class CuckooJSONReport(object):
                                  y=FileWriteYe,
                                  mode='lines',
                                  line=Line(shape='linear',
-                                           color='rgb(95,158,209)'),
+                                           color='rgb(255,187,120)'),
                                  name='File Write',
                                  hoverinfo='none')
 
         edges.append(FileWriteEdges)
+
+        marker = Marker(symbol='triangle-down', size=7,
+                        color='rgb(65,68,81)')
 
         # Create the nodes...
         FileCopyNodes = Scatter(x=FileCopyX,
@@ -1372,11 +1379,14 @@ class CuckooJSONReport(object):
                                 y=FileCopyYe,
                                 mode='lines',
                                 line=Line(shape='linear',
-                                          color='rgb(255,188,121)'),
+                                          color='rgb(65,68,81)'),
                                 name='File Copy',
                                 hoverinfo='none')
 
         edges.append(FileCopyEdges)
+
+        marker = Marker(symbol='triangle-down', size=7,
+                        color='rgb(255,128,14)')
 
         # Create the nodes...
         FileDeleteNodes = Scatter(x=FileDeleteX,
@@ -1394,11 +1404,14 @@ class CuckooJSONReport(object):
                                   y=FileDeleteYe,
                                   mode='lines',
                                   line=Line(shape='linear',
-                                            color='rgb(219,161,58)'),
+                                            color='rgb(255,128,14)'),
                                   name='File Delete',
                                   hoverinfo='none')
 
         edges.append(FileDeleteEdges)
+
+        marker = Marker(symbol='triangle-down', size=7,
+                        color='rgb(171,171,171)')
 
         # Create the nodes...
         FileMoveNodes = Scatter(x=FileMoveX,
@@ -1422,7 +1435,8 @@ class CuckooJSONReport(object):
 
         edges.append(FileMoveEdges)
 
-        marker = Marker(symbol='triangle-up', size=7)
+        marker = Marker(symbol='triangle-up', size=7,
+                        color='rgb(207,207,207)')
 
         # Create the nodes...
         FileReadNodes = Scatter(x=FileReadX,
@@ -1440,7 +1454,7 @@ class CuckooJSONReport(object):
                                 y=FileReadYe,
                                 mode='lines',
                                 line=Line(shape='linear',
-                                          color='rgb(200,82,0)'),
+                                          color='rgb(207,207,207)'),
                                 name='File Read',
                                 hoverinfo='none')
 
