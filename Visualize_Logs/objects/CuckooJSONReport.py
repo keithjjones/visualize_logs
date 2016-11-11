@@ -868,6 +868,9 @@ class CuckooJSONReport(object):
                     if self.plotregistrydeletes is True:
                         self._add_registry_deletes(node, calls)
 
+                    if self.plotregistrycreates is True:
+                        self._add_registry_creates(node, calls)
+
     def _add_registry_writes(self, node, calls):
         """
         Internal function that adds registry writes to the graph.
@@ -943,6 +946,42 @@ class CuckooJSONReport(object):
                 self.digraph.add_edge(node, rdnodename)
                 self.digraph.add_edge(rdnodename, regnodename)
 
+    def _add_registry_creates(self, node, calls):
+        """
+        Internal function that adds registry creates to the graph.
+
+        :param node:  The PID node name for the calls.
+        :param calls:  The api calls.
+        :returns:  Nothing.
+        """
+        regcreates = calls[((calls['api'] == 'RegCreateKeyExA') |
+                           (calls['api'] == 'RegCreateKeyExW') |
+                           (calls['api'] == 'NtCreateKey')) &
+                           (calls['status'] == True)]
+
+        for i, regcreate in regcreates.iterrows():
+            regname = None
+            for arg in regcreate['arguments']:
+                if arg['name'] == 'FullName':
+                    regname = arg['value']
+            if regname is not None:
+                if (self._search_re(regname, self.ignorepaths) and
+                        not self._search_re(regname, self.includepaths)):
+                    continue
+                regnodename = self._add_reg(regname)
+                # Get a sequential number for the event...
+                nextid = len(self.nodemetadata)
+                rdnodename = "REGISTRY CREATE {0}".format(nextid)
+                self.nodemetadata[rdnodename] = dict()
+                self.nodemetadata[rdnodename]['registry'] = regname
+                self.nodemetadata[rdnodename]['node_type'] = 'REGISTRYCREATE'
+                self.nodemetadata[rdnodename]['timestamp'] =\
+                    regcreate['timestamp']
+                self.digraph.add_node(rdnodename, type='REGISTRYCREATE')
+
+                self.digraph.add_edge(node, rdnodename)
+                self.digraph.add_edge(rdnodename, regnodename)
+
     def _create_positions_digraph(self):
         """
         Internal function to create the positions of the graph.
@@ -1002,6 +1041,8 @@ class CuckooJSONReport(object):
         RegistryWriteY = []
         RegistryDeleteX = []
         RegistryDeleteY = []
+        RegistryCreateX = []
+        RegistryCreateY = []
 
         # Edge coordinates...
         ProcessXe = []
@@ -1032,6 +1073,8 @@ class CuckooJSONReport(object):
         RegistryWriteYe = []
         RegistryDeleteXe = []
         RegistryDeleteYe = []
+        RegistryCreateXe = []
+        RegistryCreateYe = []
 
         # Hover Text...
         proctxt = []
@@ -1049,6 +1092,7 @@ class CuckooJSONReport(object):
         registrytxt = []
         registrywritetxt = []
         registrydeletetxt = []
+        registrycreatetxt = []
 
         # Traverse nodes...
         for node in self.digraph:
@@ -1244,6 +1288,17 @@ class CuckooJSONReport(object):
                         self.nodemetadata[node]['timestamp']
                         )
                                )
+            if self.digraph.node[node]['type'] == 'REGISTRYCREATE':
+                RegistryCreateX.append(self.pos[node][0])
+                RegistryCreateY.append(self.pos[node][1])
+                registrycreatetxt.append(
+                    "Registry Create: {0}<br>"
+                    "Time: {1}"
+                    .format(
+                        self.nodemetadata[node]['registry'],
+                        self.nodemetadata[node]['timestamp']
+                        )
+                               )
 
         # Traverse edges...
         for edge in self.digraph.edges():
@@ -1377,6 +1432,16 @@ class CuckooJSONReport(object):
                 RegistryDeleteYe.append(self.pos[edge[0]][1])
                 RegistryDeleteYe.append(self.pos[edge[1]][1])
                 RegistryDeleteYe.append(None)
+            if ((self.digraph.node[edge[0]]['type'] == 'PID' and
+                self.digraph.node[edge[1]]['type'] == 'REGISTRYCREATE') or
+                (self.digraph.node[edge[0]]['type'] == 'REGISTRYCREATE' and
+                    self.digraph.node[edge[1]]['type'] == 'REGISTRY')):
+                RegistryCreateXe.append(self.pos[edge[0]][0])
+                RegistryCreateXe.append(self.pos[edge[1]][0])
+                RegistryCreateXe.append(None)
+                RegistryCreateYe.append(self.pos[edge[0]][1])
+                RegistryCreateYe.append(self.pos[edge[1]][1])
+                RegistryCreateYe.append(None)
 
         nodes = []
         edges = []
@@ -1748,6 +1813,31 @@ class CuckooJSONReport(object):
                                       hoverinfo='none')
 
         edges.append(RegistryDeleteEdges)
+
+        marker = Marker(symbol='triangle-down', size=7,
+                        color='rgb(123,102,210)')
+
+        # Create the nodes...
+        RegistryCreateNodes = Scatter(x=RegistryCreateX,
+                                      y=RegistryCreateY,
+                                      mode='markers',
+                                      marker=marker,
+                                      name='Registry Create',
+                                      text=registrycreatetxt,
+                                      hoverinfo='text')
+
+        nodes.append(RegistryCreateNodes)
+
+        # Create the edges for the nodes...
+        RegistryCreateEdges = Scatter(x=RegistryCreateXe,
+                                      y=RegistryCreateYe,
+                                      mode='lines',
+                                      line=Line(shape='linear',
+                                                color='rgb(123,102,210)'),
+                                      name='Registry Create',
+                                      hoverinfo='none')
+
+        edges.append(RegistryCreateEdges)
 
         # Reverse the order and mush...
         output = []
