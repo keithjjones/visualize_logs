@@ -72,6 +72,22 @@ def plotcuckoojson():
                         '--noregistry', action='store_true',
                         help='Turn off all registry activity')
 
+    parser.add_argument('-rc',
+                        '--noregcreates', action='store_true',
+                        help='Turn off registry create activity')
+
+    parser.add_argument('-rd',
+                        '--noregdeletes', action='store_true',
+                        help='Turn off registry delete activity')
+
+    parser.add_argument('-rw',
+                        '--noregwrites', action='store_true',
+                        help='Turn off registry write activity')
+
+    parser.add_argument('-rr',
+                        '--noregreads', action='store_true',
+                        help='Turn off registry read activity')
+
     parser.add_argument('-ignpaths',
                         '--ignorepathsfile', metavar='IgnPathsFile.txt',
                         help='File containing regular expressions to ignore '
@@ -141,6 +157,10 @@ def plotcuckoojson():
                           plotfilereads=not(args.nofilereads),
                           plotfilewrites=not(args.nofilewrites),
                           plotregistry=not(args.noregistry),
+                          plotregistrycreates=not(args.noregcreates),
+                          plotregistrydeletes=not(args.noregdeletes),
+                          plotregistrywrites=not(args.noregwrites),
+                          plotregistryreads=not(args.noregreads),
                           ignorepaths=ignorepaths,
                           includepaths=includepaths)
 
