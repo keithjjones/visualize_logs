@@ -645,7 +645,6 @@ class CuckooJSONReport(object):
                 dns = self.dns[(self.dns['request'] == hostname)]
 
                 for i, d in dns.iterrows():
-                    print(d)
                     for j, a in d['answers'].iterrows():
                         if a['type'] == 'A':
                             ipnodename = self._add_ip(a['data'])
