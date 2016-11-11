@@ -871,6 +871,9 @@ class CuckooJSONReport(object):
                     if self.plotregistrycreates is True:
                         self._add_registry_creates(node, calls)
 
+                    if self.plotregistryreads is True:
+                        self._add_registry_reads(node, calls)
+
     def _add_registry_writes(self, node, calls):
         """
         Internal function that adds registry writes to the graph.
@@ -971,16 +974,52 @@ class CuckooJSONReport(object):
                 regnodename = self._add_reg(regname)
                 # Get a sequential number for the event...
                 nextid = len(self.nodemetadata)
-                rdnodename = "REGISTRY CREATE {0}".format(nextid)
-                self.nodemetadata[rdnodename] = dict()
-                self.nodemetadata[rdnodename]['registry'] = regname
-                self.nodemetadata[rdnodename]['node_type'] = 'REGISTRYCREATE'
-                self.nodemetadata[rdnodename]['timestamp'] =\
+                rcnodename = "REGISTRY CREATE {0}".format(nextid)
+                self.nodemetadata[rcnodename] = dict()
+                self.nodemetadata[rcnodename]['registry'] = regname
+                self.nodemetadata[rcnodename]['node_type'] = 'REGISTRYCREATE'
+                self.nodemetadata[rcnodename]['timestamp'] =\
                     regcreate['timestamp']
-                self.digraph.add_node(rdnodename, type='REGISTRYCREATE')
+                self.digraph.add_node(rcnodename, type='REGISTRYCREATE')
 
-                self.digraph.add_edge(node, rdnodename)
-                self.digraph.add_edge(rdnodename, regnodename)
+                self.digraph.add_edge(node, rcnodename)
+                self.digraph.add_edge(rcnodename, regnodename)
+
+    def _add_registry_reads(self, node, calls):
+        """
+        Internal function that adds registry reads to the graph.
+
+        :param node:  The PID node name for the calls.
+        :param calls:  The api calls.
+        :returns:  Nothing.
+        """
+        regreads = calls[((calls['api'] == 'RegQueryValueExA') |
+                         (calls['api'] == 'RegQueryValueExW') |
+                         (calls['api'] == 'NtQueryValueKey')) &
+                         (calls['status'] == True)]
+
+        for i, regread in regreads.iterrows():
+            regname = None
+            for arg in regread['arguments']:
+                if arg['name'] == 'FullName':
+                    regname = arg['value']
+            if regname is not None:
+                if (self._search_re(regname, self.ignorepaths) and
+                        not self._search_re(regname, self.includepaths)):
+                    continue
+                regnodename = self._add_reg(regname)
+                # Get a sequential number for the event...
+                nextid = len(self.nodemetadata)
+                rrnodename = "REGISTRY READ {0}".format(nextid)
+                self.nodemetadata[rrnodename] = dict()
+                self.nodemetadata[rrnodename]['registry'] = regname
+                self.nodemetadata[rrnodename]['node_type'] = 'REGISTRYREAD'
+                self.nodemetadata[rrnodename]['timestamp'] =\
+                    regread['timestamp']
+                self.digraph.add_node(rrnodename, type='REGISTRYREAD')
+
+                self.digraph.add_edge(node, rrnodename)
+                self.digraph.add_edge(rrnodename, regnodename)
 
     def _create_positions_digraph(self):
         """
@@ -1043,6 +1082,8 @@ class CuckooJSONReport(object):
         RegistryDeleteY = []
         RegistryCreateX = []
         RegistryCreateY = []
+        RegistryReadX = []
+        RegistryReadY = []
 
         # Edge coordinates...
         ProcessXe = []
@@ -1075,6 +1116,8 @@ class CuckooJSONReport(object):
         RegistryDeleteYe = []
         RegistryCreateXe = []
         RegistryCreateYe = []
+        RegistryReadXe = []
+        RegistryReadYe = []
 
         # Hover Text...
         proctxt = []
@@ -1093,6 +1136,7 @@ class CuckooJSONReport(object):
         registrywritetxt = []
         registrydeletetxt = []
         registrycreatetxt = []
+        registryreadtxt = []
 
         # Traverse nodes...
         for node in self.digraph:
@@ -1299,6 +1343,17 @@ class CuckooJSONReport(object):
                         self.nodemetadata[node]['timestamp']
                         )
                                )
+            if self.digraph.node[node]['type'] == 'REGISTRYREAD':
+                RegistryReadX.append(self.pos[node][0])
+                RegistryReadY.append(self.pos[node][1])
+                registryreadtxt.append(
+                    "Registry Read: {0}<br>"
+                    "Time: {1}"
+                    .format(
+                        self.nodemetadata[node]['registry'],
+                        self.nodemetadata[node]['timestamp']
+                        )
+                               )
 
         # Traverse edges...
         for edge in self.digraph.edges():
@@ -1442,6 +1497,16 @@ class CuckooJSONReport(object):
                 RegistryCreateYe.append(self.pos[edge[0]][1])
                 RegistryCreateYe.append(self.pos[edge[1]][1])
                 RegistryCreateYe.append(None)
+            if ((self.digraph.node[edge[0]]['type'] == 'PID' and
+                self.digraph.node[edge[1]]['type'] == 'REGISTRYREAD') or
+                (self.digraph.node[edge[0]]['type'] == 'REGISTRYREAD' and
+                    self.digraph.node[edge[1]]['type'] == 'REGISTRY')):
+                RegistryReadXe.append(self.pos[edge[0]][0])
+                RegistryReadXe.append(self.pos[edge[1]][0])
+                RegistryReadXe.append(None)
+                RegistryReadYe.append(self.pos[edge[0]][1])
+                RegistryReadYe.append(self.pos[edge[1]][1])
+                RegistryReadYe.append(None)
 
         nodes = []
         edges = []
@@ -1838,6 +1903,31 @@ class CuckooJSONReport(object):
                                       hoverinfo='none')
 
         edges.append(RegistryCreateEdges)
+
+        marker = Marker(symbol='triangle-up', size=7,
+                        color='rgb(207,207,207)')
+
+        # Create the nodes...
+        RegistryReadNodes = Scatter(x=RegistryReadX,
+                                    y=RegistryReadY,
+                                    mode='markers',
+                                    marker=marker,
+                                    name='Registry Read',
+                                    text=registryreadtxt,
+                                    hoverinfo='text')
+
+        nodes.append(RegistryReadNodes)
+
+        # Create the edges for the nodes...
+        RegistryReadEdges = Scatter(x=RegistryReadXe,
+                                    y=RegistryReadYe,
+                                    mode='lines',
+                                    line=Line(shape='linear',
+                                              color='rgb(207,207,207)'),
+                                    name='File Read',
+                                    hoverinfo='none')
+
+        edges.append(RegistryReadEdges)
 
         # Reverse the order and mush...
         output = []
