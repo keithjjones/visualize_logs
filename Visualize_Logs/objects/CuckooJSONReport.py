@@ -254,9 +254,13 @@ class CuckooJSONReport(object):
             self.nodemetadata[nodename]['first_seen'] = process['first_seen']
             self.nodemetadata[nodename]['calls'] =\
                 pandas.DataFrame(process['calls'])
+            self.nodemetadata[nodename]['calls']['timestamp'] =\
+                pandas.to_datetime(
+                    self.nodemetadata[nodename]['calls']['timestamp'])
+            self.nodemetadata[nodename]['calls'] =\
+                self.nodemetadata[nodename]['calls'].sort_values(['timestamp'])
 
             calls = self.nodemetadata[nodename]['calls']
-            calls['timestamp'] = pandas.to_datetime(calls['timestamp'])
 
             createprocs = calls[calls['api'] == 'CreateProcessInternalW']
 
@@ -598,6 +602,13 @@ class CuckooJSONReport(object):
         """
         self.domains =\
             pandas.DataFrame(self.jsonreportdata['network']['domains'])
+        self.dns =\
+            pandas.DataFrame(self.jsonreportdata['network']['dns'])
+
+        for i, dns in self.dns.iterrows():
+            self.dns.ix[i]['answers'] =\
+                pandas.DataFrame(self.dns.ix[i]['answers'])
+
         metadata = self.nodemetadata.copy()
         for node in metadata:
             if metadata[node]['node_type'] == 'PID':
@@ -631,11 +642,20 @@ class CuckooJSONReport(object):
                 hostnodename = self._add_host(hostname)
                 self.digraph.add_edge(node, hostnodename)
 
-                ips = self.domains[self.domains['domain'] == hostname]
+                dns = self.dns[(self.dns['request'] == hostname)]
 
-                for j, ip in ips.iterrows():
-                    ipnodename = self._add_ip(ip['ip'])
-                    self.digraph.add_edge(hostnodename, ipnodename)
+                for i, d in dns.iterrows():
+                    print(d)
+                    for j, a in d['answers'].iterrows():
+                        if a['type'] == 'A':
+                            ipnodename = self._add_ip(a['data'])
+                            self.digraph.add_edge(hostnodename, ipnodename)
+
+                # ips = self.domains[self.domains['domain'] == hostname]
+
+                # for j, ip in ips.iterrows():
+                #     ipnodename = self._add_ip(ip['ip'])
+                #     self.digraph.add_edge(hostnodename, ipnodename)
 
     def _add_host(self, host):
         """
@@ -775,26 +795,26 @@ class CuckooJSONReport(object):
                     if arg['name'] == 'port':
                         port = arg['value']
 
-                    if ipaddr is not None:
-                        ipnodename = self._add_ip(ipaddr)
+                if ipaddr is not None:
+                    ipnodename = self._add_ip(ipaddr)
 
-                        # Get a sequential number for the event...
-                        nextid = len(self.nodemetadata)
+                    # Get a sequential number for the event...
+                    nextid = len(self.nodemetadata)
 
-                        connnodename = 'TCP CONNECT {0}'.format(nextid)
-                        self.digraph.add_node(connnodename, type='TCPCONNECT')
-                        self.nodemetadata[connnodename] = dict()
-                        self.nodemetadata[connnodename]['node_type'] =\
-                            "TCPCONNECT"
-                        self.nodemetadata[connnodename]['timestamp'] =\
-                            tcpconnect['timestamp']
-                        self.nodemetadata[connnodename]['ip'] = ipaddr
-                        self.nodemetadata[connnodename]['socket'] = socketid
-                        self.nodemetadata[connnodename]['port'] = port
+                    connnodename = 'TCP CONNECT {0}'.format(nextid)
+                    self.digraph.add_node(connnodename, type='TCPCONNECT')
+                    self.nodemetadata[connnodename] = dict()
+                    self.nodemetadata[connnodename]['node_type'] =\
+                        "TCPCONNECT"
+                    self.nodemetadata[connnodename]['timestamp'] =\
+                        tcpconnect['timestamp']
+                    self.nodemetadata[connnodename]['ip'] = ipaddr
+                    self.nodemetadata[connnodename]['socket'] = socketid
+                    self.nodemetadata[connnodename]['port'] = port
 
-                        # Connect them up...
-                        self.digraph.add_edge(node, connnodename)
-                        self.digraph.add_edge(connnodename, ipnodename)
+                    # Connect them up...
+                    self.digraph.add_edge(node, connnodename)
+                    self.digraph.add_edge(connnodename, ipnodename)
 
     def _create_positions_digraph(self):
         """
