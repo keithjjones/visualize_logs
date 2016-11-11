@@ -102,8 +102,10 @@ class CuckooJSONReport(object):
                  plotfilewrites=True,
                  plotfilereads=True,
                  plotregistry=True,
-                 plotregistrywrites = True,
-                 plotregistryreads = True,
+                 plotregistrywrites=True,
+                 plotregistryreads=True,
+                 plotregistrydeletes=True,
+                 plotregistrycreates=True,
                  ignorepaths=None,
                  includepaths=None):
         """
@@ -126,6 +128,8 @@ class CuckooJSONReport(object):
         :param plotregistry: Set to False to ignore registry activity.
         :param plotregistrywrites: Set to False to ignore registry writes.
         :param plotregistryreads: Set to False to ignore registry reads.
+        :param plotregistrydeletes: Set to False to ignore registry deletes.
+        :param plotregistrycreates: Set to False to ignore registry creates.
         :param ignorepaths: A list of regular expressions to ignore for
             files and registry values.
         :param includepaths: A list of regular expressions to include for
@@ -142,6 +146,8 @@ class CuckooJSONReport(object):
 
         self.plotregistrywrites = plotregistrywrites
         self.plotregistryreads = plotregistryreads
+        self.plotregistrydeletes = plotregistrydeletes
+        self.plotregistrycreates = plotregistrycreates
 
         if ignorepaths is not None and isinstance(ignorepaths, list):
             self.ignorepaths = ignorepaths
@@ -859,6 +865,9 @@ class CuckooJSONReport(object):
                     if self.plotregistrywrites is True:
                         self._add_registry_writes(node, calls)
 
+                    if self.plotregistrydeletes is True:
+                        self._add_registry_deletes(node, calls)
+
     def _add_registry_writes(self, node, calls):
         """
         Internal function that adds registry writes to the graph.
@@ -897,6 +906,42 @@ class CuckooJSONReport(object):
 
                 self.digraph.add_edge(node, rwnodename)
                 self.digraph.add_edge(rwnodename, regnodename)
+
+    def _add_registry_deletes(self, node, calls):
+        """
+        Internal function that adds registry deletes to the graph.
+
+        :param node:  The PID node name for the calls.
+        :param calls:  The api calls.
+        :returns:  Nothing.
+        """
+        regdeletes = calls[((calls['api'] == 'RegDeleteValueA') |
+                           (calls['api'] == 'RegDeleteValueW') |
+                           (calls['api'] == 'NtDeleteKey')) &
+                           (calls['status'] == True)]
+
+        for i, regdelete in regdeletes.iterrows():
+            regname = None
+            for arg in regdelete['arguments']:
+                if arg['name'] == 'FullName':
+                    regname = arg['value']
+            if regname is not None:
+                if (self._search_re(regname, self.ignorepaths) and
+                        not self._search_re(regname, self.includepaths)):
+                    continue
+                regnodename = self._add_reg(regname)
+                # Get a sequential number for the event...
+                nextid = len(self.nodemetadata)
+                rdnodename = "REGISTRY DELETE {0}".format(nextid)
+                self.nodemetadata[rdnodename] = dict()
+                self.nodemetadata[rdnodename]['registry'] = regname
+                self.nodemetadata[rdnodename]['node_type'] = 'REGISTRYDELETE'
+                self.nodemetadata[rdnodename]['timestamp'] =\
+                    regdelete['timestamp']
+                self.digraph.add_node(rdnodename, type='REGISTRYDELETE')
+
+                self.digraph.add_edge(node, rdnodename)
+                self.digraph.add_edge(rdnodename, regnodename)
 
     def _create_positions_digraph(self):
         """
@@ -955,6 +1000,8 @@ class CuckooJSONReport(object):
         RegistryY = []
         RegistryWriteX = []
         RegistryWriteY = []
+        RegistryDeleteX = []
+        RegistryDeleteY = []
 
         # Edge coordinates...
         ProcessXe = []
@@ -983,6 +1030,8 @@ class CuckooJSONReport(object):
         FileReadYe = []
         RegistryWriteXe = []
         RegistryWriteYe = []
+        RegistryDeleteXe = []
+        RegistryDeleteYe = []
 
         # Hover Text...
         proctxt = []
@@ -999,6 +1048,7 @@ class CuckooJSONReport(object):
         filereadtxt = []
         registrytxt = []
         registrywritetxt = []
+        registrydeletetxt = []
 
         # Traverse nodes...
         for node in self.digraph:
@@ -1183,6 +1233,17 @@ class CuckooJSONReport(object):
                         self.nodemetadata[node]['timestamp']
                         )
                                )
+            if self.digraph.node[node]['type'] == 'REGISTRYDELETE':
+                RegistryDeleteX.append(self.pos[node][0])
+                RegistryDeleteY.append(self.pos[node][1])
+                registrydeletetxt.append(
+                    "Registry Delete: {0}<br>"
+                    "Time: {1}"
+                    .format(
+                        self.nodemetadata[node]['registry'],
+                        self.nodemetadata[node]['timestamp']
+                        )
+                               )
 
         # Traverse edges...
         for edge in self.digraph.edges():
@@ -1306,6 +1367,16 @@ class CuckooJSONReport(object):
                 RegistryWriteYe.append(self.pos[edge[0]][1])
                 RegistryWriteYe.append(self.pos[edge[1]][1])
                 RegistryWriteYe.append(None)
+            if ((self.digraph.node[edge[0]]['type'] == 'PID' and
+                self.digraph.node[edge[1]]['type'] == 'REGISTRYDELETE') or
+                (self.digraph.node[edge[0]]['type'] == 'REGISTRYDELETE' and
+                    self.digraph.node[edge[1]]['type'] == 'REGISTRY')):
+                RegistryDeleteXe.append(self.pos[edge[0]][0])
+                RegistryDeleteXe.append(self.pos[edge[1]][0])
+                RegistryDeleteXe.append(None)
+                RegistryDeleteYe.append(self.pos[edge[0]][1])
+                RegistryDeleteYe.append(self.pos[edge[1]][1])
+                RegistryDeleteYe.append(None)
 
         nodes = []
         edges = []
@@ -1652,6 +1723,31 @@ class CuckooJSONReport(object):
                                      hoverinfo='none')
 
         edges.append(RegistryWriteEdges)
+
+        marker = Marker(symbol='triangle-down', size=7,
+                        color='rgb(255,128,14)')
+
+        # Create the nodes...
+        RegistryDeleteNodes = Scatter(x=RegistryDeleteX,
+                                      y=RegistryDeleteY,
+                                      mode='markers',
+                                      marker=marker,
+                                      name='Registry Delete',
+                                      text=registrydeletetxt,
+                                      hoverinfo='text')
+
+        nodes.append(RegistryDeleteNodes)
+
+        # Create the edges for the nodes...
+        RegistryDeleteEdges = Scatter(x=RegistryDeleteXe,
+                                      y=RegistryDeleteYe,
+                                      mode='lines',
+                                      line=Line(shape='linear',
+                                                color='rgb(255,128,14)'),
+                                      name='Registry Delete',
+                                      hoverinfo='none')
+
+        edges.append(RegistryDeleteEdges)
 
         # Reverse the order and mush...
         output = []
