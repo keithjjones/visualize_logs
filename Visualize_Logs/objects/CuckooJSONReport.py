@@ -222,7 +222,7 @@ class CuckooJSONReport(object):
         self.nodemetadata[nodename]['pid'] = pid
         self.nodemetadata[nodename]['parent_id'] = ppid
         self.nodemetadata[nodename]['threads'] = processtreedict['threads']
-        self.nodemetadata[nodename]['environ'] = processtreedict['environ']
+        # self.nodemetadata[nodename]['environ'] = processtreedict['environ']
         self.nodemetadata[nodename]['name'] = processtreedict['name']
         self.nodemetadata[nodename]['module_path'] =\
             processtreedict['module_path']
