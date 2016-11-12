@@ -12,7 +12,7 @@ def read(fname):
 
 setup(
     name='visualize_logs',
-    version='20161111.2',
+    version='20161112.1',
     author='Keith J. Jones',
     author_email='keith@keithjjones.com',
     packages=['Visualize_Logs', 'Visualize_Logs.objects'],
