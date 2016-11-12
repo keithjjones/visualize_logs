@@ -93,6 +93,7 @@ class CuckooJSONReport(object):
     http://lxr.free-electrons.com/source/include/uapi/linux/in.h"""
 
     def __init__(self, jsonreportfile=None,
+                 jsonreportdict=None,
                  plotnetwork=True,
                  plotfiles=True,
                  plotfilecreates=True,
@@ -115,8 +116,12 @@ class CuckooJSONReport(object):
         This has been tested with the cuckoo-modifed version, but it may
         work with Cuckoo (proper) as well.
 
-        :param jsonreportfile: The path to the JSON report file.
+        :param jsonreportfile: The path to the JSON report file.  Set to
+            None to use a jsonreportstring.
         :type jsonreportfile: A string.
+        :param jsonreportdict: A dict containing a JSON
+            report file loaded with JSON load.
+            Set to None to use a jsonreportfile.
         :param plotnetwork: Set to False to ignore network activity.
         :param plotfiles: Set to False to ignore file activity.
         :param plotfilecreates: Set to False to ignore file creates.
@@ -155,13 +160,19 @@ class CuckooJSONReport(object):
         if includepaths is not None and isinstance(includepaths, list):
             self.includepaths = includepaths
 
-        if not os.path.exists(jsonreportfile):
-            raise Exceptions.VisualizeLogsInvalidFile(jsonreportfile)
-        else:
-            self.jsonreportfile = jsonreportfile
+        if jsonreportfile is not None:
+            if not os.path.exists(jsonreportfile):
+                raise Exceptions.VisualizeLogsInvalidFile(jsonreportfile)
+            else:
+                self.jsonreportfile = jsonreportfile
 
-        with open(self.jsonreportfile, 'r') as jsonfile:
-            self.jsonreportdata = json.load(jsonfile)
+            with open(self.jsonreportfile, 'r') as jsonfile:
+                self.jsonreportdata = json.load(jsonfile)
+        elif jsonreportdict is not None:
+            self.jsonreportfile = None
+            self.jsonreportdata = jsonreportdict
+        else:
+            raise Exceptions.VisualizeLogsBadFunctionInput("jsonreportfile")
 
         # Create a network graph...
         self.digraph = networkx.DiGraph()
