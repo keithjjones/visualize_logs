@@ -12,6 +12,7 @@ A Python library and command line tools to provide log visualization.
   - [plotcuckoojson](#plotcuckoojson)
   - [plotprocmoncsv](#plotprocmoncsv)
 - [Sample Data](#sample-data)
+  - [Cuckoo-Modified Sample Data](#cuckoo-modified-sample-data)
   - [ProcMon CSV Sample Data](#procmon-csv-sample-data)
 - [Documentation](#documentation)
 - [Resources](#resources)
