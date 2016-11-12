@@ -661,6 +661,45 @@ class CuckooJSONReport(object):
         :returns: Nothing.
         """
         self._add_internet_url(node, calls)
+        self._add_internet_server_connect(node, calls)
+
+    def _add_internet_server_connect(self, node, calls):
+        """
+        Internal function to add internet server connect activity.
+
+        :param node:  The node name for the calls.
+        :param calls:  A pandas.DataFrame of process calls
+            for node.
+        :returns: Nothing.
+        """
+        servers = calls[((calls['api'] == 'InternetConnectA') |
+                        (calls['api'] == 'InternetConnectW')) &
+                        (calls['status'] == True)]
+
+        for i, server in servers.iterrows():
+            destserver = None
+
+            for arg in server['arguments']:
+                if arg['name'] == 'ServerName':
+                    destserver = arg['value']
+                if arg['name'] == 'ServerPort':
+                    destport = arg['value']
+
+            if destserver is not None:
+                servernodename = self._add_host(destserver)
+                # Get a sequential number for the event...
+                nextid = len(self.nodemetadata)
+                connnodename = "SERVER CONNECT {0}".format(nextid)
+                self.nodemetadata[connnodename] = dict()
+                self.nodemetadata[connnodename]['server'] = destserver
+                self.nodemetadata[connnodename]['port'] = destport
+                self.nodemetadata[connnodename]['node_type'] = 'SERVERCONNECT'
+                self.nodemetadata[connnodename]['timestamp'] =\
+                    server['timestamp']
+                self.digraph.add_node(connnodename, type='SERVERCONNECT')
+
+                self.digraph.add_edge(node, connnodename)
+                self.digraph.add_edge(connnodename, servernodename)
 
     def _add_internet_url(self, node, calls):
         """
@@ -732,7 +771,7 @@ class CuckooJSONReport(object):
         hostnodename = "HOST {0}".format(host)
         if hostnodename not in self.nodemetadata:
             self.nodemetadata[hostnodename] = dict()
-            self.nodemetadata[hostnodename]['node_type'] = 'IP'
+            self.nodemetadata[hostnodename]['node_type'] = 'HOST'
             self.nodemetadata[hostnodename]['host'] = host
             self.digraph.add_node(hostnodename, type='HOST')
 
@@ -1161,6 +1200,8 @@ class CuckooJSONReport(object):
         RegistryReadY = []
         URLX = []
         URLY = []
+        ServerX = []
+        ServerY = []
 
         # Edge coordinates...
         ProcessXe = []
@@ -1197,6 +1238,8 @@ class CuckooJSONReport(object):
         RegistryReadYe = []
         URLXe = []
         URLYe = []
+        ServerXe = []
+        ServerYe = []
 
         # Hover Text...
         proctxt = []
@@ -1217,6 +1260,7 @@ class CuckooJSONReport(object):
         registrycreatetxt = []
         registryreadtxt = []
         urltxt = []
+        servertxt = []
 
         # Traverse nodes...
         for node in self.digraph:
@@ -1247,7 +1291,20 @@ class CuckooJSONReport(object):
                 hosttxt.append(
                     "HOST: {0}"
                     .format(
-                        self.nodemetadata[node]['host'],
+                        self.nodemetadata[node]['host']
+                        )
+                               )
+            if self.digraph.node[node]['type'] == 'SERVERCONNECT':
+                ServerX.append(self.pos[node][0])
+                ServerY.append(self.pos[node][1])
+                servertxt.append(
+                    "Server Connect: {0}<br>"
+                    "Port: {1}<br>"
+                    "Time: {2}"
+                    .format(
+                        self.nodemetadata[node]['server'],
+                        self.nodemetadata[node]['port'],
+                        self.nodemetadata[node]['timestamp']
                         )
                                )
             if self.digraph.node[node]['type'] == 'IP':
@@ -1465,6 +1522,16 @@ class CuckooJSONReport(object):
                 GetNameYe.append(self.pos[edge[0]][1])
                 GetNameYe.append(self.pos[edge[1]][1])
                 GetNameYe.append(None)
+            if ((self.digraph.node[edge[0]]['type'] == 'PID' and
+                self.digraph.node[edge[1]]['type'] == 'SERVERCONNECT') or
+                (self.digraph.node[edge[0]]['type'] == 'SERVERCONNECT' and
+                    self.digraph.node[edge[1]]['type'] == 'HOST')):
+                ServerXe.append(self.pos[edge[0]][0])
+                ServerXe.append(self.pos[edge[1]][0])
+                ServerXe.append(None)
+                ServerYe.append(self.pos[edge[0]][1])
+                ServerYe.append(self.pos[edge[1]][1])
+                ServerYe.append(None)
             if (self.digraph.node[edge[0]]['type'] == 'HOST' and
                     self.digraph.node[edge[1]]['type'] == 'IP'):
                 DNSXe.append(self.pos[edge[0]][0])
@@ -1662,6 +1729,31 @@ class CuckooJSONReport(object):
 
         edges.append(GetNameEdges)
 
+        # SERVERS...
+
+        marker = Marker(symbol='diamond', size=7)
+
+        # Create the nodes...
+        ServerNodes = Scatter(x=ServerX,
+                              y=ServerY,
+                              mode='markers',
+                              marker=marker,
+                              name='Server Connections',
+                              text=servertxt,
+                              hoverinfo='text')
+
+        nodes.append(ServerNodes)
+
+        # Create the edges for the nodes...
+        ServerEdges = Scatter(x=ServerXe,
+                              y=ServerYe,
+                              mode='lines',
+                              line=Line(shape='linear'),
+                              name='Server Connect',
+                              hoverinfo='none')
+
+        edges.append(ServerEdges)
+
         # IPS...
 
         marker = Marker(symbol='square', size=10)
@@ -1747,7 +1839,7 @@ class CuckooJSONReport(object):
                            y=URLY,
                            mode='markers',
                            marker=marker,
-                           name='File',
+                           name='URL',
                            text=urltxt,
                            hoverinfo='text')
 
