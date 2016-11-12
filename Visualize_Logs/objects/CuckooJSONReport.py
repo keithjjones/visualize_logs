@@ -1160,12 +1160,14 @@ class CuckooJSONReport(object):
                     "PID: {0}<br>"
                     "Path: {1}<br>"
                     "Command Line: {2}<br>"
-                    "Parent PID: {3}"
+                    "Parent PID: {3}<br>"
+                    "First Seen: {4}"
                     .format(
                         self.nodemetadata[node]['pid'],
                         self.nodemetadata[node]['module_path'],
                         cmdline,
-                        self.nodemetadata[node]['parent_id']
+                        self.nodemetadata[node]['parent_id'],
+                        self.nodemetadata[node]['first_seen']
                         )
                                )
             if self.digraph.node[node]['type'] == 'HOST':
