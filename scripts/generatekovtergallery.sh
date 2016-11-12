@@ -8,3 +8,11 @@ plotprocmoncsv -sp -t "Kovter Example 2" -f ../gallery/procmoncsv/kovter2_exampl
 plotprocmoncsv -sp -pfw -pfd -pfn -t "Kovter Example 3" -f ../gallery/procmoncsv/kovter2_example3.html /Source/Procmon\ CSV/Kovter2.csv
 plotprocmoncsv -sp -prw -prd -t "Kovter Example 4" -f ../gallery/procmoncsv/kovter2_example4.html /Source/Procmon\ CSV/Kovter2.csv
 plotprocmoncsv -sp -pt -pu -t "Kovter Example 5" -f ../gallery/procmoncsv/kovter2_example5.html /Source/Procmon\ CSV/Kovter2.csv
+plotcuckoojson -t "Kovter Example 1" -f ../gallery/cuckoojson/kovter1_example1.html -fa -ra -na /Source/cuckoo-modified-json/1_report.json
+plotcuckoojson -t "Kovter Example 2" -f ../gallery/cuckoojson/kovter1_example2.html -fa -ra /Source/cuckoo-modified-json/1_report.json
+plotcuckoojson -t "Kovter Example 3" -f ../gallery/cuckoojson/kovter1_example3.html -na -ra /Source/cuckoo-modified-json/1_report.json
+plotcuckoojson -t "Kovter Example 4" -f ../gallery/cuckoojson/kovter1_example4.html -fa -na /Source/cuckoo-modified-json/1_report.json
+plotcuckoojson -t "Kovter Example 1" -f ../gallery/cuckoojson/kovter2_example1.html -fa -ra -na /Source/cuckoo-modified-json/2_report.json
+plotcuckoojson -t "Kovter Example 2" -f ../gallery/cuckoojson/kovter2_example2.html -fa -ra /Source/cuckoo-modified-json/2_report.json
+plotcuckoojson -t "Kovter Example 3" -f ../gallery/cuckoojson/kovter2_example3.html -na -ra /Source/cuckoo-modified-json/2_report.json
+plotcuckoojson -t "Kovter Example 4" -f ../gallery/cuckoojson/kovter2_example4.html -fa -na /Source/cuckoo-modified-json/2_report.json
