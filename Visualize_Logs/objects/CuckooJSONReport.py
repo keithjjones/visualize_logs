@@ -730,14 +730,23 @@ class CuckooJSONReport(object):
         :param registry:  Registry
         :returns: Noe name for the registry.
         """
+        origregistry = registry
+        registry = registry.replace('\\', '\\\\')
         regnodename = '"REGISTRY {0}"'.format(registry)
         if regnodename not in self.nodemetadata:
+            nextid = len(self.nodemetadata)
+            newregnodename = 'REGISTRY {0}'.format(nextid)
+            self.nodemetadata[newregnodename] = dict()
+            self.nodemetadata[newregnodename]['link'] = regnodename
             self.nodemetadata[regnodename] = dict()
             self.nodemetadata[regnodename]['node_type'] = 'REGISTRY'
-            self.nodemetadata[regnodename]['registry'] = registry
-            self.digraph.add_node(regnodename, type='REGISTRY')
+            self.nodemetadata[regnodename]['registry'] = origregistry
+            self.nodemetadata[regnodename]['link'] = newregnodename
+            self.digraph.add_node(newregnodename, type='REGISTRY')
+        else:
+            newregnodename = self.nodemetadata[regnodename]['link']
 
-        return regnodename
+        return newregnodename
 
     def _add_sockets(self, node, calls):
         """
@@ -1302,10 +1311,11 @@ class CuckooJSONReport(object):
             if self.digraph.node[node]['type'] == 'REGISTRY':
                 RegistryX.append(self.pos[node][0])
                 RegistryY.append(self.pos[node][1])
+                newreg = self.nodemetadata[node]['link']
                 registrytxt.append(
                     "Registry: {0}"
                     .format(
-                        self.nodemetadata[node]['registry']
+                        self.nodemetadata[newreg]['registry']
                         )
                                )
             if self.digraph.node[node]['type'] == 'REGISTRYWRITE':

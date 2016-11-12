@@ -416,8 +416,12 @@ You can find some sample JSON reports from cuckoo-modified in the
 There are four traces:
 
 - 2 Kovter examples
-- wwwlgoogle.com adware
+  - 1_report.json
+  - 2_report.json
 - Ransomware
+  - 3_report.json
+- wwwlgoogle.com adware
+  - 4_report.json
 
 ## ProcMon CSV Sample Data
 
