@@ -649,6 +649,8 @@ class CuckooJSONReport(object):
                     self._add_sockets(node, calls)
                     # Add internet activity outside sockets...
                     self._add_internet(node, calls)
+                    # Resolve...
+                    self._add_resolve_hosts()
 
     def _add_internet(self, node, calls):
         """
@@ -662,6 +664,44 @@ class CuckooJSONReport(object):
         """
         self._add_internet_url(node, calls)
         self._add_internet_server_connect(node, calls)
+        self._add_internet_ip_connect(node, calls)
+
+    def _add_internet_ip_connect(self, node, calls):
+        """
+        Internal function to add ip connect activity.
+
+        :param node:  The node name for the calls.
+        :param calls:  A pandas.DataFrame of process calls
+            for node.
+        :returns: Nothing.
+        """
+        ips = calls[(calls['api'] == 'ConnectEx') &
+                    (calls['status'] == True)]
+
+        for i, ip in ips.iterrows():
+            destip = None
+
+            for arg in ip['arguments']:
+                if arg['name'] == 'ip':
+                    destip = arg['value']
+                if arg['name'] == 'port':
+                    destport = arg['value']
+
+            if destip is not None:
+                ipnodename = self._add_ip(destip)
+                # Get a sequential number for the event...
+                nextid = len(self.nodemetadata)
+                connnodename = "IP CONNECT {0}".format(nextid)
+                self.nodemetadata[connnodename] = dict()
+                self.nodemetadata[connnodename]['ip'] = destip
+                self.nodemetadata[connnodename]['port'] = destport
+                self.nodemetadata[connnodename]['node_type'] = 'IPCONNECT'
+                self.nodemetadata[connnodename]['timestamp'] =\
+                    ip['timestamp']
+                self.digraph.add_node(connnodename, type='IPCONNECT')
+
+                self.digraph.add_edge(node, connnodename)
+                self.digraph.add_edge(connnodename, ipnodename)
 
     def _add_internet_server_connect(self, node, calls):
         """
@@ -724,6 +764,25 @@ class CuckooJSONReport(object):
             if desturl is not None:
                 urlnodename = self._add_url(desturl)
                 self.digraph.add_edge(node, urlnodename)
+
+    def _add_resolve_hosts(self):
+        """
+        Internal function to resolve hostnames to IPs.
+
+        :returns:  Nothing.
+        """
+        digraphcopy = self.digraph.copy()
+
+        for node in digraphcopy:
+            if digraphcopy.node[node]['type'] == 'HOST':
+                hostname = self.nodemetadata[node]['host']
+                dns = self.dns[self.dns['request'] == hostname]
+
+                for i, d in dns.iterrows():
+                    for j, a in d['answers'].iterrows():
+                        if a['type'] == 'A':
+                            ipnodename = self._add_ip(a['data'])
+                            self.digraph.add_edge(node, ipnodename)
 
     def _add_dns_lookups(self, node, calls):
         """
@@ -1202,6 +1261,8 @@ class CuckooJSONReport(object):
         URLY = []
         ServerX = []
         ServerY = []
+        IPConnX = []
+        IPConnY = []
 
         # Edge coordinates...
         ProcessXe = []
@@ -1240,6 +1301,8 @@ class CuckooJSONReport(object):
         URLYe = []
         ServerXe = []
         ServerYe = []
+        IPConnXe = []
+        IPConnYe = []
 
         # Hover Text...
         proctxt = []
@@ -1261,6 +1324,7 @@ class CuckooJSONReport(object):
         registryreadtxt = []
         urltxt = []
         servertxt = []
+        ipconntxt = []
 
         # Traverse nodes...
         for node in self.digraph:
@@ -1303,6 +1367,19 @@ class CuckooJSONReport(object):
                     "Time: {2}"
                     .format(
                         self.nodemetadata[node]['server'],
+                        self.nodemetadata[node]['port'],
+                        self.nodemetadata[node]['timestamp']
+                        )
+                               )
+            if self.digraph.node[node]['type'] == 'IPCONNECT':
+                IPConnX.append(self.pos[node][0])
+                IPConnY.append(self.pos[node][1])
+                ipconntxt.append(
+                    "IP Connect: {0}<br>"
+                    "Port: {1}<br>"
+                    "Time: {2}"
+                    .format(
+                        self.nodemetadata[node]['ip'],
                         self.nodemetadata[node]['port'],
                         self.nodemetadata[node]['timestamp']
                         )
@@ -1532,6 +1609,16 @@ class CuckooJSONReport(object):
                 ServerYe.append(self.pos[edge[0]][1])
                 ServerYe.append(self.pos[edge[1]][1])
                 ServerYe.append(None)
+            if ((self.digraph.node[edge[0]]['type'] == 'PID' and
+                self.digraph.node[edge[1]]['type'] == 'IPCONNECT') or
+                (self.digraph.node[edge[0]]['type'] == 'IPCONNECT' and
+                    self.digraph.node[edge[1]]['type'] == 'IP')):
+                IPConnXe.append(self.pos[edge[0]][0])
+                IPConnXe.append(self.pos[edge[1]][0])
+                IPConnXe.append(None)
+                IPConnYe.append(self.pos[edge[0]][1])
+                IPConnYe.append(self.pos[edge[1]][1])
+                IPConnYe.append(None)
             if (self.digraph.node[edge[0]]['type'] == 'HOST' and
                     self.digraph.node[edge[1]]['type'] == 'IP'):
                 DNSXe.append(self.pos[edge[0]][0])
@@ -1753,6 +1840,31 @@ class CuckooJSONReport(object):
                               hoverinfo='none')
 
         edges.append(ServerEdges)
+
+        # IP CONNECTS...
+
+        marker = Marker(symbol='diamond', size=7)
+
+        # Create the nodes...
+        IPConnNodes = Scatter(x=IPConnX,
+                              y=IPConnY,
+                              mode='markers',
+                              marker=marker,
+                              name='IP Connections',
+                              text=ipconntxt,
+                              hoverinfo='text')
+
+        nodes.append(IPConnNodes)
+
+        # Create the edges for the nodes...
+        IPConnEdges = Scatter(x=IPConnXe,
+                              y=IPConnYe,
+                              mode='lines',
+                              line=Line(shape='linear'),
+                              name='IP Connect',
+                              hoverinfo='none')
+
+        edges.append(IPConnEdges)
 
         # IPS...
 
