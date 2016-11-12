@@ -647,6 +647,44 @@ class CuckooJSONReport(object):
                     self._add_dns_lookups(node, calls)
                     # Add socket activity...
                     self._add_sockets(node, calls)
+                    # Add internet activity outside sockets...
+                    self._add_internet(node, calls)
+
+    def _add_internet(self, node, calls):
+        """
+        Internal function to add internet activity outside
+        socket activity.
+
+        :param node: The node name for the calls.
+        :param calls:  A pandas.DataFrame of process calls
+            for node.
+        :returns: Nothing.
+        """
+        self._add_internet_url(node, calls)
+
+    def _add_internet_url(self, node, calls):
+        """
+        Internal function to add internet url activity.
+
+        :param node:  The node name for the calls.
+        :param calls:  A pandas.DataFrame of process calls
+            for node.
+        :returns: Nothing.
+        """
+        urls = calls[((calls['api'] == 'InternetOpenUrlW') |
+                     (calls['api'] == 'InternetOpenUrlA')) &
+                     (calls['status'] == True)]
+
+        for i, url in urls.iterrows():
+            desturl = None
+
+            for arg in url['arguments']:
+                if arg['name'] == 'URL':
+                    desturl = arg['value']
+
+            if desturl is not None:
+                urlnodename = self._add_url(desturl)
+                self.digraph.add_edge(node, urlnodename)
 
     def _add_dns_lookups(self, node, calls):
         """
@@ -739,7 +777,7 @@ class CuckooJSONReport(object):
         Internal function to add a registry if it does not exsit.
 
         :param registry:  Registry
-        :returns: Noe name for the registry.
+        :returns: Node name for the registry.
         """
         origregistry = registry
         registry = registry.replace('\\', '\\\\')
@@ -758,6 +796,23 @@ class CuckooJSONReport(object):
             newregnodename = self.nodemetadata[regnodename]['link']
 
         return newregnodename
+
+    def _add_url(self, url):
+        """
+        Internal function to add a URL if it does not exist.
+
+        :param url:  URL
+        :returns: Node name for the URL.
+        """
+        origurl = url
+        urlnodename = '"URL {0}"'.format(url)
+        if urlnodename not in self.nodemetadata:
+            self.nodemetadata[urlnodename] = dict()
+            self.nodemetadata[urlnodename]['node_type'] = 'URL'
+            self.nodemetadata[urlnodename]['url'] = origurl
+            self.digraph.add_node(urlnodename, type='URL')
+
+        return urlnodename
 
     def _add_sockets(self, node, calls):
         """
@@ -1104,6 +1159,8 @@ class CuckooJSONReport(object):
         RegistryCreateY = []
         RegistryReadX = []
         RegistryReadY = []
+        URLX = []
+        URLY = []
 
         # Edge coordinates...
         ProcessXe = []
@@ -1138,6 +1195,8 @@ class CuckooJSONReport(object):
         RegistryCreateYe = []
         RegistryReadXe = []
         RegistryReadYe = []
+        URLXe = []
+        URLYe = []
 
         # Hover Text...
         proctxt = []
@@ -1157,6 +1216,7 @@ class CuckooJSONReport(object):
         registrydeletetxt = []
         registrycreatetxt = []
         registryreadtxt = []
+        urltxt = []
 
         # Traverse nodes...
         for node in self.digraph:
@@ -1377,6 +1437,15 @@ class CuckooJSONReport(object):
                         self.nodemetadata[node]['timestamp']
                         )
                                )
+            if self.digraph.node[node]['type'] == 'URL':
+                URLX.append(self.pos[node][0])
+                URLY.append(self.pos[node][1])
+                urltxt.append(
+                    "URL: {0}"
+                    .format(
+                        self.nodemetadata[node]['url']
+                        )
+                               )
 
         # Traverse edges...
         for edge in self.digraph.edges():
@@ -1530,6 +1599,14 @@ class CuckooJSONReport(object):
                 RegistryReadYe.append(self.pos[edge[0]][1])
                 RegistryReadYe.append(self.pos[edge[1]][1])
                 RegistryReadYe.append(None)
+            if (self.digraph.node[edge[0]]['type'] == 'PID' and
+                self.digraph.node[edge[1]]['type'] == 'URL'):
+                URLXe.append(self.pos[edge[0]][0])
+                URLXe.append(self.pos[edge[1]][0])
+                URLXe.append(None)
+                URLYe.append(self.pos[edge[0]][1])
+                URLYe.append(self.pos[edge[1]][1])
+                URLYe.append(None)
 
         nodes = []
         edges = []
@@ -1660,6 +1737,31 @@ class CuckooJSONReport(object):
 
         nodes.append(TCPConnectNodes)
         edges.append(TCPConnectEdges)
+
+        # URLS...
+
+        marker = Marker(symbol='square', size=10)
+
+        # Create the nodes...
+        URLNodes = Scatter(x=URLX,
+                           y=URLY,
+                           mode='markers',
+                           marker=marker,
+                           name='File',
+                           text=urltxt,
+                           hoverinfo='text')
+
+        nodes.append(URLNodes)
+
+        # Create the edges for the nodes...
+        URLEdges = Scatter(x=URLXe,
+                           y=URLYe,
+                           mode='lines',
+                           line=Line(shape='linear'),
+                           name='URL Connect',
+                           hoverinfo='none')
+
+        edges.append(URLEdges)
 
         # FILES...
 
