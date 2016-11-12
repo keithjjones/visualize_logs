@@ -675,8 +675,7 @@ class CuckooJSONReport(object):
             for node.
         :returns: Nothing.
         """
-        ips = calls[(calls['api'] == 'ConnectEx') &
-                    (calls['status'] == True)]
+        ips = calls[(calls['api'] == 'ConnectEx')]
 
         for i, ip in ips.iterrows():
             destip = None
