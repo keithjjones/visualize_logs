@@ -1,6 +1,13 @@
 Visualize_Logs package
 ======================
 
+Subpackages
+-----------
+
+.. toctree::
+
+    Visualize_Logs.objects
+
 Module contents
 ---------------
 
