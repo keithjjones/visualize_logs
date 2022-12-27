@@ -1,4 +1,4 @@
 pandas==0.19.1
 plotly==1.12.9
-setuptools==28.7.1
+setuptools==65.5.1
 networkx==1.11
